@@ -109,13 +109,14 @@ class DatabaseService {
   }
 
   // -- ROUNDS --
-  Future<bool> addRoundToSession(String sessionId, List<String> roundPlayers) async {
+  Future<bool> addRoundToSession(String sessionId, List<String> roundPlayers, List<String> expansions) async {
     try {
       final newRound = RoundModel(
         id: DateTime.now().millisecondsSinceEpoch.toString(), // simple unique id
         players: roundPlayers,
         winnerUid: null,
         isActive: true,
+        expansions: expansions,
       );
 
       await _firestore.collection('sessions').doc(sessionId).update({
@@ -137,17 +138,18 @@ class DatabaseService {
         if (!snapshot.exists) return false;
         
         List<dynamic> currentRoundsMap = snapshot.get('rounds') ?? [];
+        List<Map<String, dynamic>> updatedRounds = [];
         
-        // Find and update the specific round
-        for (int i = 0; i < currentRoundsMap.length; i++) {
-          if (currentRoundsMap[i]['id'] == round.id) {
-            currentRoundsMap[i]['winnerUid'] = winnerUid;
-            currentRoundsMap[i]['isActive'] = false;
-            break;
+        for (var r in currentRoundsMap) {
+          Map<String, dynamic> roundData = Map<String, dynamic>.from(r as Map);
+          if (roundData['id'] == round.id) {
+            roundData['winnerUid'] = winnerUid;
+            roundData['isActive'] = false;
           }
+          updatedRounds.add(roundData);
         }
         
-        transaction.update(docRef, {'rounds': currentRoundsMap});
+        transaction.update(docRef, {'rounds': updatedRounds});
         return true;
       });
     } catch (e) {

@@ -5,12 +5,14 @@ class RoundModel {
   final List<String> players;
   final String? winnerUid;
   final bool isActive;
+  final List<String> expansions;
 
   RoundModel({
     required this.id,
     required this.players,
     this.winnerUid,
     this.isActive = true,
+    this.expansions = const [],
   });
 
   factory RoundModel.fromMap(Map<String, dynamic> data) {
@@ -19,6 +21,7 @@ class RoundModel {
       players: List<String>.from(data['players'] ?? []),
       winnerUid: data['winnerUid'],
       isActive: data['isActive'] ?? false,
+      expansions: List<String>.from(data['expansions'] ?? []),
     );
   }
 
@@ -28,6 +31,7 @@ class RoundModel {
       'players': players,
       'winnerUid': winnerUid,
       'isActive': isActive,
+      'expansions': expansions,
     };
   }
 }

@@ -48,7 +48,14 @@ class MyApp extends StatelessWidget {
             return const Scaffold(body: Center(child: CircularProgressIndicator()));
           }
           if (authProvider.isAuthenticated) {
-            return const GroupSelectionScreen();
+            return Consumer<GroupProvider>(
+              builder: (context, groupProvider, child) {
+                if (groupProvider.activeGroup != null) {
+                  return const HomeScreen();
+                }
+                return const GroupSelectionScreen();
+              },
+            );
           }
           return const AuthScreen();
         },

@@ -114,7 +114,14 @@ class SessionDetailScreen extends StatelessWidget {
                   child: ListTile(
                     leading: CircleAvatar(child: Text('${index + 1}')),
                     title: Text('Winner: ${winner.name}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text('${round.players.length} players participated'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('${round.players.length} players participated'),
+                        if (round.expansions.isNotEmpty)
+                          Text('Expansions: ${round.expansions.join(', ')}', style: const TextStyle(fontStyle: FontStyle.italic)),
+                      ],
+                    ),
                   ),
                 );
               }),
@@ -126,6 +133,8 @@ class SessionDetailScreen extends StatelessWidget {
 
   void _showStartRoundDialog(BuildContext context, GroupProvider provider, String sessionId, List<dynamic> sessionMembers) {
     List<String> selectedForRound = [];
+    List<String> selectedExpansions = [];
+    final expansions = ['Seafarers', 'Cities & Knights', 'Traders & Barbarians', 'Explorers & Pirates'];
     
     showDialog(
       context: context,
@@ -133,25 +142,51 @@ class SessionDetailScreen extends StatelessWidget {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Select Players for Round'),
+              title: const Text('Start Round'),
               content: SingleChildScrollView(
                 child: Column(
-                  children: sessionMembers.map((player) {
-                    bool isSelected = selectedForRound.contains(player.uid);
-                    return CheckboxListTile(
-                      title: Text(player.name),
-                      value: isSelected,
-                      onChanged: (val) {
-                        setState(() {
-                          if (val == true) {
-                            selectedForRound.add(player.uid);
-                          } else {
-                            selectedForRound.remove(player.uid);
-                          }
-                        });
-                      },
-                    );
-                  }).toList(),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Players', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    ...sessionMembers.map((player) {
+                      bool isSelected = selectedForRound.contains(player.uid);
+                      return CheckboxListTile(
+                        title: Text(player.name),
+                        value: isSelected,
+                        dense: true,
+                        onChanged: (val) {
+                          setState(() {
+                            if (val == true) {
+                              selectedForRound.add(player.uid);
+                            } else {
+                              selectedForRound.remove(player.uid);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                    const Divider(),
+                    const Text('Expansions', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    ...expansions.map((exp) {
+                      bool isSelected = selectedExpansions.contains(exp);
+                      return CheckboxListTile(
+                        title: Text(exp),
+                        value: isSelected,
+                        dense: true,
+                        onChanged: (val) {
+                          setState(() {
+                            if (val == true) {
+                              selectedExpansions.add(exp);
+                            } else {
+                              selectedExpansions.remove(exp);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ],
                 ),
               ),
               actions: [
@@ -163,7 +198,7 @@ class SessionDetailScreen extends StatelessWidget {
                       return;
                     }
                     Navigator.pop(context);
-                    await provider.addRound(sessionId, selectedForRound);
+                    await provider.addRound(sessionId, selectedForRound, selectedExpansions);
                   },
                   child: const Text('Start'),
                 )

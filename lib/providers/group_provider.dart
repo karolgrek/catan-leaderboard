@@ -49,6 +49,10 @@ class GroupProvider extends ChangeNotifier {
     return await _dbService.joinGroup(groupId, userUid);
   }
 
+  Stream<List<GroupModel>> getUserGroups(String userUid) {
+    return _dbService.getUserGroups(userUid);
+  }
+
   Future<bool> createSession(DateTime date, String notes, List<String> selectedPlayers) async {
     if (_activeGroup == null) return false;
     SessionModel? session = await _dbService.createSession(_activeGroup!.id, date, notes, selectedPlayers);
@@ -59,8 +63,8 @@ class GroupProvider extends ChangeNotifier {
     return await _dbService.finishSession(sessionId);
   }
 
-  Future<bool> addRound(String sessionId, List<String> roundPlayers) async {
-    return await _dbService.addRoundToSession(sessionId, roundPlayers);
+  Future<bool> addRound(String sessionId, List<String> roundPlayers, List<String> expansions) async {
+    return await _dbService.addRoundToSession(sessionId, roundPlayers, expansions);
   }
 
   Future<bool> finishRound(String sessionId, RoundModel round, String winnerUid) async {
