@@ -12,14 +12,13 @@ class SessionDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // We listen to the GroupProvider to get the up-to-date session object
     final groupProvider = Provider.of<GroupProvider>(context);
-    
-    // Find the latest version of this session from the provider
     final latestSessionIndex = groupProvider.sessions.indexWhere((s) => s.id == session.id);
     final currentSession = latestSessionIndex != -1 ? groupProvider.sessions[latestSessionIndex] : session;
-
     final members = groupProvider.groupMembers.where((m) => currentSession.selectedPlayers.contains(m.uid)).toList();
+
+    final activeRound = currentSession.rounds.where((r) => r.isActive).firstOrNull;
+    final finishedRounds = currentSession.rounds.where((r) => !r.isActive).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -28,81 +27,151 @@ class SessionDetailScreen extends StatelessWidget {
           if (currentSession.isActive)
             TextButton(
               onPressed: () async {
-                bool success = await groupProvider.finishSession(currentSession.id);
-                if (success) {
-                  SnackbarHelper.showSuccess(context, 'Session finished!');
-                } else {
-                  SnackbarHelper.showError(context, 'Failed to finish session.');
+                if (activeRound != null) {
+                  SnackbarHelper.showError(context, 'Finish the active round first!');
+                  return;
                 }
+                bool success = await groupProvider.finishSession(currentSession.id);
+                if (success) SnackbarHelper.showSuccess(context, 'Session finished!');
               },
               style: TextButton.styleFrom(foregroundColor: Colors.white),
               child: const Text('Finish Session'),
             )
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (currentSession.notes.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                'Notes: ${currentSession.notes}',
-                style: const TextStyle(fontStyle: FontStyle.italic),
-              ),
-            ),
-          
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: currentSession.isActive ? Colors.green.shade100 : Colors.grey.shade200,
-            child: Row(
-              children: [
-                Icon(currentSession.isActive ? Icons.play_circle_fill : Icons.stop_circle, 
-                  color: currentSession.isActive ? Colors.green : Colors.grey),
-                const SizedBox(width: 8),
-                Text(
-                  currentSession.isActive ? 'Active Session (Add Winners)' : 'Finished Session',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                const Spacer(),
-                Text('Total Games: ${currentSession.gameWinners.length}'),
-              ],
-            ),
-          ),
-          
-          const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text('Players & Wins', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          ),
-          
-          Expanded(
-            child: ListView.builder(
-              itemCount: members.length,
-              itemBuilder: (context, index) {
-                final player = members[index];
-                final wins = currentSession.gameWinners.where((uid) => uid == player.uid).length;
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (currentSession.notes.isNotEmpty)
+              Text('Notes: ${currentSession.notes}', style: const TextStyle(fontStyle: FontStyle.italic)),
+            
+            const SizedBox(height: 16),
 
-                return ListTile(
-                  title: Text(player.name),
-                  subtitle: Text('Wins: $wins'),
-                  trailing: currentSession.isActive
-                      ? ElevatedButton.icon(
-                          onPressed: () async {
-                            bool success = await groupProvider.addWinnerToSession(currentSession.id, player.uid);
-                            if (success) {
-                              SnackbarHelper.showSuccess(context, '${player.name} won a game!');
-                            }
-                          },
-                          icon: const Icon(Icons.add),
-                          label: const Text('Win'),
-                        )
-                      : null,
+            // Active Round Section
+            if (activeRound != null)
+              Card(
+                color: Colors.green.shade50,
+                elevation: 4,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.play_arrow, color: Colors.green),
+                          SizedBox(width: 8),
+                          Text('Active Round', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green)),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      const Text('Select the Winner to finish the round:'),
+                      const SizedBox(height: 8),
+                      ...activeRound.players.map((uid) {
+                        final player = members.firstWhere((m) => m.uid == uid);
+                        return ListTile(
+                          title: Text(player.name),
+                          trailing: ElevatedButton(
+                            onPressed: () async {
+                              bool success = await groupProvider.finishRound(currentSession.id, activeRound, player.uid);
+                              if (success) SnackbarHelper.showSuccess(context, '${player.name} won the round!');
+                            },
+                            child: const Text('Winner'),
+                          ),
+                        );
+                      }).toList(),
+                    ],
+                  ),
+                ),
+              ),
+
+            if (currentSession.isActive && activeRound == null)
+              ElevatedButton.icon(
+                icon: const Icon(Icons.add),
+                label: const Text('Start New Round'),
+                onPressed: () {
+                  _showStartRoundDialog(context, groupProvider, currentSession.id, members);
+                },
+                style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(16)),
+              ),
+
+            const SizedBox(height: 24),
+            
+            // Finished Rounds History
+            const Text('Round History', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            if (finishedRounds.isEmpty)
+              const Text('No rounds finished yet.')
+            else
+              ...finishedRounds.asMap().entries.map((entry) {
+                int index = entry.key;
+                RoundModel round = entry.value;
+                final winner = members.firstWhere((m) => m.uid == round.winnerUid, orElse: () => members.first);
+                
+                return Card(
+                  child: ListTile(
+                    leading: CircleAvatar(child: Text('${index + 1}')),
+                    title: Text('Winner: ${winner.name}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text('${round.players.length} players participated'),
+                  ),
                 );
-              },
-            ),
-          ),
-        ],
+              }),
+          ],
+        ),
       ),
+    );
+  }
+
+  void _showStartRoundDialog(BuildContext context, GroupProvider provider, String sessionId, List<dynamic> sessionMembers) {
+    List<String> selectedForRound = [];
+    
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Select Players for Round'),
+              content: SingleChildScrollView(
+                child: Column(
+                  children: sessionMembers.map((player) {
+                    bool isSelected = selectedForRound.contains(player.uid);
+                    return CheckboxListTile(
+                      title: Text(player.name),
+                      value: isSelected,
+                      onChanged: (val) {
+                        setState(() {
+                          if (val == true) {
+                            selectedForRound.add(player.uid);
+                          } else {
+                            selectedForRound.remove(player.uid);
+                          }
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (selectedForRound.isEmpty) {
+                      SnackbarHelper.showError(context, 'Select at least 1 player');
+                      return;
+                    }
+                    Navigator.pop(context);
+                    await provider.addRound(sessionId, selectedForRound);
+                  },
+                  child: const Text('Start'),
+                )
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }

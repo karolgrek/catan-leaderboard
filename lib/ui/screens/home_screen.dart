@@ -40,6 +40,18 @@ class HomeScreen extends StatelessWidget {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.people),
+            tooltip: 'Seed Fake Users (Debug)',
+            onPressed: () async {
+              bool success = await groupProvider.seedTestUsers();
+              if (success) {
+                SnackbarHelper.showSuccess(context, 'Seeded 4 fake users to this group!');
+              } else {
+                SnackbarHelper.showError(context, 'Failed to seed users.');
+              }
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.copy),
             tooltip: 'Copy Group ID',
             onPressed: () {
@@ -78,7 +90,7 @@ class HomeScreen extends StatelessWidget {
                                 child: Text('${index + 1}'),
                               ),
                               title: Text(user.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                              subtitle: Text('Games Played: $sessionsCount'),
+                              subtitle: Text('Rounds Played: $sessionsCount'),
                               trailing: Text('$winsCount Wins', style: const TextStyle(fontSize: 16, color: Colors.green, fontWeight: FontWeight.bold)),
                             );
                           },
@@ -112,7 +124,7 @@ class HomeScreen extends StatelessWidget {
                                 size: 32,
                               ),
                               title: Text(DateFormatter.toReadableDate(session.date)),
-                              subtitle: Text('${session.gameWinners.length} games played'),
+                              subtitle: Text('${session.rounds.length} rounds recorded'),
                               trailing: const Icon(Icons.chevron_right),
                               tileColor: session.isActive ? Colors.green.withOpacity(0.1) : null,
                               onTap: () {

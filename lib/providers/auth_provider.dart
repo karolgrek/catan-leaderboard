@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
   
-  UserModel? _user;
+  User? _user;
+  UserModel? _userModel;
   bool _isLoading = true;
 
-  UserModel? get user => _user;
+  User? get user => _user;
+  UserModel? get userModel => _userModel;
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _user != null;
 
@@ -17,18 +20,15 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> _init() async {
-    _authService.userStream.listen((UserModel? user) {
+    _authService.userStream.listen((User? user) async {
       _user = user;
+      if (user != null) {
+        _userModel = await _authService.getUserData(user.uid);
+      } else {
+        _userModel = null;
+      }
       _isLoading = false;
       notifyListeners();
-    });
-    
-    // Stop loading immediately since we are mocking
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (_isLoading) {
-        _isLoading = false;
-        notifyListeners();
-      }
     });
   }
 
@@ -36,10 +36,13 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     
-    UserModel? result = await _authService.signInWithEmailAndPassword(email, password);
+    User? result = await _authService.signInWithEmailAndPassword(email, password);
     
-    _isLoading = false;
-    notifyListeners();
+    // isLoading is handled by the userStream listener, but we can set it here if auth failed
+    if (result == null) {
+      _isLoading = false;
+      notifyListeners();
+    }
     return result != null;
   }
 
@@ -47,10 +50,12 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     
-    UserModel? result = await _authService.registerWithEmailAndPassword(email, password, name);
+    User? result = await _authService.registerWithEmailAndPassword(email, password, name);
     
-    _isLoading = false;
-    notifyListeners();
+    if (result == null) {
+      _isLoading = false;
+      notifyListeners();
+    }
     return result != null;
   }
 

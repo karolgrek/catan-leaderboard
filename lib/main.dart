@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'providers/group_provider.dart';
 import 'ui/screens/auth_screen.dart';
@@ -8,17 +10,14 @@ import 'ui/screens/group_selection_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // TODO: Setup Firebase credentials!
-  // - Android: Download google-services.json and place it in android/app/
-  // - iOS: Download GoogleService-Info.plist and place it in ios/Runner/
-  
-  /* MOCKED OUT FOR UI PREVIEW
+  // Real Firebase Initialization
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
   } catch (e) {
-    debugPrint("Firebase init error (Did you add the config files?): $e");
+    debugPrint("Firebase init error: $e");
   }
-  */
 
   runApp(
     MultiProvider(

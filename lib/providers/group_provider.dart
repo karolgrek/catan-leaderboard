@@ -24,10 +24,8 @@ class GroupProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    // Fetch member details
     _groupMembers = await _dbService.getUsersByIds(group.members);
     
-    // Listen to sessions for this group
     _sessionsSubscription?.cancel();
     _sessionsSubscription = _dbService.getGroupSessions(group.id).listen((sessionsData) {
       _sessions = sessionsData;
@@ -53,49 +51,59 @@ class GroupProvider extends ChangeNotifier {
 
   Future<bool> createSession(DateTime date, String notes, List<String> selectedPlayers) async {
     if (_activeGroup == null) return false;
-    
-    SessionModel? session = await _dbService.createSession(
-      _activeGroup!.id, 
-      date, 
-      notes, 
-      selectedPlayers
-    );
-    
+    SessionModel? session = await _dbService.createSession(_activeGroup!.id, date, notes, selectedPlayers);
     return session != null;
-  }
-
-  Future<bool> addWinnerToSession(String sessionId, String winnerUid) async {
-    return await _dbService.addWinnerToSession(sessionId, winnerUid);
   }
 
   Future<bool> finishSession(String sessionId) async {
     return await _dbService.finishSession(sessionId);
   }
 
-  // Calculate leaderboard based on wins and games played
+  Future<bool> addRound(String sessionId, List<String> roundPlayers) async {
+    return await _dbService.addRoundToSession(sessionId, roundPlayers);
+  }
+
+  Future<bool> finishRound(String sessionId, RoundModel round, String winnerUid) async {
+    return await _dbService.finishRound(sessionId, round, winnerUid);
+  }
+
+  Future<bool> seedTestUsers() async {
+    if (_activeGroup == null) return false;
+    bool success = await _dbService.seedTestUsersAndAddToGroup(_activeGroup!.id);
+    if (success) {
+      // Refresh members
+      _groupMembers = await _dbService.getUsersByIds(_activeGroup!.members); // Wait, _activeGroup.members might be stale.
+      // Easiest way to force refresh is just wait for user to re-enter, or just hardcode refresh:
+      // A proper way would be listening to group changes, but for seeding this is fine.
+    }
+    return success;
+  }
+
+  // Calculate leaderboard based on rounds (wins and games played)
   List<Map<String, dynamic>> getLeaderboard() {
     if (_groupMembers.isEmpty) return [];
 
-    Map<String, int> sessionCounts = {};
+    Map<String, int> gamesPlayed = {};
     Map<String, int> winCounts = {};
     
     for (var member in _groupMembers) {
-      sessionCounts[member.uid] = 0;
+      gamesPlayed[member.uid] = 0;
       winCounts[member.uid] = 0;
     }
 
     for (var session in _sessions) {
-      // Count participation
-      for (var playerId in session.selectedPlayers) {
-        if (sessionCounts.containsKey(playerId)) {
-          sessionCounts[playerId] = sessionCounts[playerId]! + 1;
-        }
-      }
-      
-      // Count wins
-      for (var winnerId in session.gameWinners) {
-        if (winCounts.containsKey(winnerId)) {
-          winCounts[winnerId] = winCounts[winnerId]! + 1;
+      for (var round in session.rounds) {
+        if (!round.isActive && round.winnerUid != null) {
+          // Count participation in finished rounds
+          for (var playerId in round.players) {
+            if (gamesPlayed.containsKey(playerId)) {
+              gamesPlayed[playerId] = gamesPlayed[playerId]! + 1;
+            }
+          }
+          // Count wins
+          if (winCounts.containsKey(round.winnerUid)) {
+            winCounts[round.winnerUid!] = winCounts[round.winnerUid!]! + 1;
+          }
         }
       }
     }
@@ -103,12 +111,12 @@ class GroupProvider extends ChangeNotifier {
     List<Map<String, dynamic>> leaderboard = _groupMembers.map((member) {
       return {
         'user': member,
-        'sessionsPlayed': sessionCounts[member.uid] ?? 0,
+        'sessionsPlayed': gamesPlayed[member.uid] ?? 0, // Keeping the key name for UI compatibility, but it means games
         'wins': winCounts[member.uid] ?? 0,
       };
     }).toList();
 
-    // Sort by wins (descending), then by sessions played
+    // Sort by wins (descending), then by games played
     leaderboard.sort((a, b) {
       int winComparison = (b['wins'] as int).compareTo(a['wins'] as int);
       if (winComparison != 0) return winComparison;

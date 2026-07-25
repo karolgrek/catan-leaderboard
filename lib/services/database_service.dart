@@ -1,97 +1,194 @@
-import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/group_model.dart';
 import '../models/session_model.dart';
 import '../models/user_model.dart';
 
 class DatabaseService {
-  // MOCK DATA - Firebase is bypassed
-  final List<GroupModel> _mockGroups = [];
-  final List<SessionModel> _mockSessions = [];
-  final StreamController<List<SessionModel>> _sessionsController = StreamController.broadcast();
-  final StreamController<List<GroupModel>> _groupsController = StreamController.broadcast();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   
+  // -- GROUPS --
   Future<GroupModel?> createGroup(String name, String creatorUid) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    var newGroup = GroupModel(
-      id: 'group_${DateTime.now().millisecondsSinceEpoch}',
-      name: name,
-      createdBy: creatorUid,
-      members: [creatorUid, 'player_2_uid', 'player_3_uid', 'player_4_uid'],
-      createdAt: DateTime.now(),
-    );
-    _mockGroups.add(newGroup);
-    _groupsController.add(_mockGroups);
-    return newGroup;
+    try {
+      DocumentReference docRef = await _firestore.collection('groups').add({
+        'name': name,
+        'createdBy': creatorUid,
+        'members': [creatorUid],
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      
+      DocumentSnapshot doc = await docRef.get();
+      return GroupModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+    } catch (e) {
+      print(e.toString());
+      return null;
+    }
   }
 
   Future<bool> joinGroup(String groupId, String userUid) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    _groupsController.add(_mockGroups);
-    return true; // Pretend it was successful
+    try {
+      DocumentReference docRef = _firestore.collection('groups').doc(groupId);
+      DocumentSnapshot doc = await docRef.get();
+      if (doc.exists) {
+        await docRef.update({
+          'members': FieldValue.arrayUnion([userUid])
+        });
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print(e.toString());
+      return false;
+    }
   }
 
   Stream<List<GroupModel>> getUserGroups(String userUid) {
-    Future.microtask(() => _groupsController.add(_mockGroups));
-    return _groupsController.stream;
+    return _firestore.collection('groups')
+      .where('members', arrayContains: userUid)
+      .snapshots()
+      .map((snapshot) {
+        return snapshot.docs.map((doc) => GroupModel.fromMap(doc.data(), doc.id)).toList();
+      });
   }
 
   Future<List<UserModel>> getUsersByIds(List<String> uids) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    return uids.map((id) => UserModel(
-      uid: id, 
-      email: '$id@mock.com', 
-      name: id == 'mock_uid_123' ? 'Test User (You)' : 'Player $id'
-    )).toList();
-  }
-
-  Future<SessionModel?> createSession(String groupId, DateTime date, String notes, List<String> selectedPlayers) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    var session = SessionModel(
-      id: 'session_${DateTime.now().millisecondsSinceEpoch}',
-      groupId: groupId,
-      date: date,
-      notes: notes,
-      selectedPlayers: selectedPlayers,
-      isActive: true,
-      gameWinners: [],
-    );
-    _mockSessions.add(session);
-    _notifySessions(groupId);
-    return session;
-  }
-
-  Future<bool> addWinnerToSession(String sessionId, String winnerUid) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    int index = _mockSessions.indexWhere((s) => s.id == sessionId);
-    if (index != -1) {
-      SessionModel current = _mockSessions[index];
-      List<String> updatedWinners = List.from(current.gameWinners)..add(winnerUid);
-      _mockSessions[index] = current.copyWith(gameWinners: updatedWinners);
-      _notifySessions(current.groupId);
-      return true;
+    if (uids.isEmpty) return [];
+    try {
+      // Note: For lists larger than 10, batching is needed. We assume small groups for now.
+      QuerySnapshot snapshot = await _firestore.collection('users')
+          .where(FieldPath.documentId, whereIn: uids)
+          .get();
+          
+      return snapshot.docs.map((doc) => UserModel.fromMap(doc.data() as Map<String, dynamic>, doc.id)).toList();
+    } catch (e) {
+      print(e.toString());
+      return [];
     }
-    return false;
+  }
+
+  // -- SESSIONS --
+  Future<SessionModel?> createSession(String groupId, DateTime date, String notes, List<String> selectedPlayers) async {
+    try {
+      DocumentReference docRef = await _firestore.collection('sessions').add({
+        'groupId': groupId,
+        'date': Timestamp.fromDate(date),
+        'notes': notes,
+        'selectedPlayers': selectedPlayers,
+        'isActive': true,
+        'rounds': [], // Initialize empty rounds array
+      });
+      
+      DocumentSnapshot doc = await docRef.get();
+      return SessionModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+    } catch (e) {
+      print(e.toString());
+      return null;
+    }
   }
 
   Future<bool> finishSession(String sessionId) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    int index = _mockSessions.indexWhere((s) => s.id == sessionId);
-    if (index != -1) {
-      SessionModel current = _mockSessions[index];
-      _mockSessions[index] = current.copyWith(isActive: false);
-      _notifySessions(current.groupId);
+    try {
+      await _firestore.collection('sessions').doc(sessionId).update({
+        'isActive': false
+      });
       return true;
+    } catch (e) {
+      print(e.toString());
+      return false;
     }
-    return false;
-  }
-
-  void _notifySessions(String groupId) {
-    _sessionsController.add(_mockSessions.where((s) => s.groupId == groupId).toList());
   }
 
   Stream<List<SessionModel>> getGroupSessions(String groupId) {
-    // Send immediate initial data
-    Future.microtask(() => _notifySessions(groupId));
-    return _sessionsController.stream;
+    return _firestore.collection('sessions')
+      .where('groupId', isEqualTo: groupId)
+      .orderBy('date', descending: true)
+      .snapshots()
+      .map((snapshot) {
+        return snapshot.docs.map((doc) => SessionModel.fromMap(doc.data(), doc.id)).toList();
+      });
+  }
+
+  // -- ROUNDS --
+  Future<bool> addRoundToSession(String sessionId, List<String> roundPlayers) async {
+    try {
+      final newRound = RoundModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(), // simple unique id
+        players: roundPlayers,
+        winnerUid: null,
+        isActive: true,
+      );
+
+      await _firestore.collection('sessions').doc(sessionId).update({
+        'rounds': FieldValue.arrayUnion([newRound.toMap()])
+      });
+      return true;
+    } catch (e) {
+      print(e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> finishRound(String sessionId, RoundModel round, String winnerUid) async {
+    try {
+      DocumentReference docRef = _firestore.collection('sessions').doc(sessionId);
+      
+      return await _firestore.runTransaction((transaction) async {
+        DocumentSnapshot snapshot = await transaction.get(docRef);
+        if (!snapshot.exists) return false;
+        
+        List<dynamic> currentRoundsMap = snapshot.get('rounds') ?? [];
+        
+        // Find and update the specific round
+        for (int i = 0; i < currentRoundsMap.length; i++) {
+          if (currentRoundsMap[i]['id'] == round.id) {
+            currentRoundsMap[i]['winnerUid'] = winnerUid;
+            currentRoundsMap[i]['isActive'] = false;
+            break;
+          }
+        }
+        
+        transaction.update(docRef, {'rounds': currentRoundsMap});
+        return true;
+      });
+    } catch (e) {
+      print(e.toString());
+      return false;
+    }
+  }
+
+  // -- SEEDING --
+  Future<bool> seedTestUsersAndAddToGroup(String groupId) async {
+    try {
+      final List<Map<String, dynamic>> testUsers = [
+        {'uid': 'seed_john', 'name': 'John (Seed)', 'email': 'john@seed.com'},
+        {'uid': 'seed_emma', 'name': 'Emma (Seed)', 'email': 'emma@seed.com'},
+        {'uid': 'seed_mike', 'name': 'Mike (Seed)', 'email': 'mike@seed.com'},
+        {'uid': 'seed_sarah', 'name': 'Sarah (Seed)', 'email': 'sarah@seed.com'},
+      ];
+
+      WriteBatch batch = _firestore.batch();
+      List<String> newMemberUids = [];
+
+      for (var user in testUsers) {
+        DocumentReference userRef = _firestore.collection('users').doc(user['uid']);
+        batch.set(userRef, {
+          'name': user['name'],
+          'email': user['email'],
+        });
+        newMemberUids.add(user['uid']);
+      }
+
+      await batch.commit();
+
+      // Add them to the group
+      await _firestore.collection('groups').doc(groupId).update({
+        'members': FieldValue.arrayUnion(newMemberUids)
+      });
+
+      return true;
+    } catch (e) {
+      print(e.toString());
+      return false;
+    }
   }
 }

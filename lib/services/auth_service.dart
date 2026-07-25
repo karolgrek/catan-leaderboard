@@ -1,36 +1,57 @@
-import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
 
 class AuthService {
-  // MOCK STATE - Firebase is bypassed
-  final _userController = StreamController<UserModel?>.broadcast();
-  UserModel? _mockUser;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Stream<UserModel?> get userStream => _userController.stream;
+  Stream<User?> get userStream => _auth.authStateChanges();
   
-  String? get currentUserUid => _mockUser?.uid;
+  String? get currentUserUid => _auth.currentUser?.uid;
 
-  Future<UserModel?> signInWithEmailAndPassword(String email, String password) async {
-    await Future.delayed(const Duration(seconds: 1)); // Simulate network
-    _mockUser = UserModel(uid: 'mock_uid_123', email: email, name: 'Test User');
-    _userController.add(_mockUser);
-    return _mockUser;
+  Future<User?> signInWithEmailAndPassword(String email, String password) async {
+    try {
+      UserCredential result = await _auth.signInWithEmailAndPassword(email: email, password: password);
+      return result.user;
+    } catch (e) {
+      print(e.toString());
+      return null;
+    }
   }
 
-  Future<UserModel?> registerWithEmailAndPassword(String email, String password, String name) async {
-    await Future.delayed(const Duration(seconds: 1));
-    _mockUser = UserModel(uid: 'mock_uid_123', email: email, name: name);
-    _userController.add(_mockUser);
-    return _mockUser;
+  Future<User?> registerWithEmailAndPassword(String email, String password, String name) async {
+    try {
+      UserCredential result = await _auth.createUserWithEmailAndPassword(email: email, password: password);
+      User? user = result.user;
+      
+      if (user != null) {
+        // Create user document in Firestore
+        await _firestore.collection('users').doc(user.uid).set({
+          'email': email,
+          'name': name,
+        });
+      }
+      return user;
+    } catch (e) {
+      print(e.toString());
+      return null;
+    }
   }
 
   Future<UserModel?> getUserData(String uid) async {
-    return _mockUser;
+    try {
+      DocumentSnapshot doc = await _firestore.collection('users').doc(uid).get();
+      if (doc.exists) {
+        return UserModel.fromMap(doc.data() as Map<String, dynamic>, uid);
+      }
+    } catch (e) {
+      print(e.toString());
+    }
+    return null;
   }
 
   Future<void> signOut() async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    _mockUser = null;
-    _userController.add(null);
+    await _auth.signOut();
   }
 }
