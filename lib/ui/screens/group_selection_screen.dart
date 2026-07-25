@@ -101,7 +101,7 @@ class _GroupSelectionScreenState extends State<GroupSelectionScreen> {
                 if (created && mounted) {
                   SnackbarHelper.showSuccess(context, 'Group created successfully!');
                   _createGroupNameController.clear();
-                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
+                  // main.dart Provider will automatically switch to HomeScreen
                 } else {
                   if (mounted) SnackbarHelper.showError(context, 'Failed to create group.');
                 }
@@ -137,25 +137,39 @@ class _GroupSelectionScreenState extends State<GroupSelectionScreen> {
       ),
       body: Column(
         children: [
-          const SizedBox(height: 40),
-          // Beautiful Center Logo/Icon
-          const Center(
+          // Beautiful Header
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary,
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(32),
+                bottomRight: Radius.circular(32),
+              ),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))
+              ],
+            ),
             child: Column(
               children: [
-                Icon(Icons.hexagon, size: 80, color: Colors.orange), // Catan hex vibe
-                SizedBox(height: 16),
-                Text(
-                  'Welcome to THE Catan leaderboard',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                const Icon(Icons.hexagon, size: 80, color: Colors.white),
+                const SizedBox(height: 16),
+                const Text(
+                  'Catan Leaderboard',
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
                   textAlign: TextAlign.center,
                 ),
-                SizedBox(height: 8),
-                Text('Select a group to view the leaderboard'),
+                const SizedBox(height: 8),
+                Text(
+                  'Select a group to view rankings',
+                  style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 16),
+                ),
               ],
             ),
           ),
           
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           
           // List of existing groups
           Expanded(
@@ -173,8 +187,19 @@ class _GroupSelectionScreenState extends State<GroupSelectionScreen> {
                 final List<dynamic> groups = snapshot.data ?? [];
 
                 if (groups.isEmpty) {
-                  return const Center(
-                    child: Text('You are not in any groups yet.\nCreate or Join one below!'),
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.group_off_outlined, size: 64, color: Colors.grey.shade400),
+                        const SizedBox(height: 16),
+                        Text(
+                          'You are not in any groups yet.\nCreate or Join one below!',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
+                        ),
+                      ],
+                    ),
                   );
                 }
 
@@ -183,17 +208,41 @@ class _GroupSelectionScreenState extends State<GroupSelectionScreen> {
                   itemCount: groups.length,
                   itemBuilder: (context, index) {
                     final group = groups[index];
-                    return Card(
-                      elevation: 3,
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(16),
-                        title: Text(group.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                        subtitle: Text('${group.members.length} members'),
-                        trailing: const Icon(Icons.arrow_forward_ios),
-                        onTap: () async {
-                          await groupProvider.setActiveGroup(group);
-                        },
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Card(
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () async {
+                            await groupProvider.setActiveGroup(group);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
+                                  child: Icon(Icons.people, color: Theme.of(context).colorScheme.secondary),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        group.name,
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text('${group.members.length} members', style: TextStyle(color: Colors.grey.shade600)),
+                                    ],
+                                  ),
+                                ),
+                                Icon(Icons.arrow_forward_ios, color: Colors.grey.shade400, size: 16),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     );
                   },
@@ -204,9 +253,10 @@ class _GroupSelectionScreenState extends State<GroupSelectionScreen> {
           
           // Bottom Buttons
           Container(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(24.0),
             decoration: BoxDecoration(
               color: Colors.white,
+              borderRadius: const BorderRadius.only(topLeft: Radius.circular(32), topRight: Radius.circular(32)),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
@@ -222,11 +272,7 @@ class _GroupSelectionScreenState extends State<GroupSelectionScreen> {
                     child: OutlinedButton.icon(
                       onPressed: () => _showJoinModal(context, groupProvider, authProvider),
                       icon: const Icon(Icons.group_add),
-                      label: const Text('Join Group'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: BorderSide(color: Theme.of(context).colorScheme.primary),
-                      ),
+                      label: const Text('Join'),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -234,10 +280,7 @@ class _GroupSelectionScreenState extends State<GroupSelectionScreen> {
                     child: ElevatedButton.icon(
                       onPressed: () => _showCreateModal(context, groupProvider, authProvider),
                       icon: const Icon(Icons.add_circle),
-                      label: const Text('Create Group'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
+                      label: const Text('Create'),
                     ),
                   ),
                 ],

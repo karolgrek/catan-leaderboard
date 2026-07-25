@@ -40,45 +40,80 @@ class SessionDetailScreen extends StatelessWidget {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (currentSession.notes.isNotEmpty)
-              Text('Notes: ${currentSession.notes}', style: const TextStyle(fontStyle: FontStyle.italic)),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.3)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.notes, color: Theme.of(context).colorScheme.secondary),
+                    const SizedBox(width: 12),
+                    Expanded(child: Text(currentSession.notes, style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 16))),
+                  ],
+                ),
+              ),
             
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
 
             // Active Round Section
             if (activeRound != null)
               Card(
                 color: Colors.green.shade50,
                 elevation: 4,
+                shadowColor: Colors.green.withOpacity(0.4),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: const BorderSide(color: Colors.green, width: 2),
+                ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Row(
                         children: [
-                          Icon(Icons.play_arrow, color: Colors.green),
-                          SizedBox(width: 8),
-                          Text('Active Round', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.green)),
+                          Icon(Icons.play_circle_fill, color: Colors.green, size: 28),
+                          SizedBox(width: 12),
+                          Text('Active Round', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green)),
                         ],
                       ),
                       const SizedBox(height: 16),
-                      const Text('Select the Winner to finish the round:'),
-                      const SizedBox(height: 8),
+                      const Text('Who collected 10 victory points first?', style: TextStyle(fontSize: 16)),
+                      const SizedBox(height: 16),
                       ...activeRound.players.map((uid) {
                         final player = members.firstWhere((m) => m.uid == uid);
-                        return ListTile(
-                          title: Text(player.name),
-                          trailing: ElevatedButton(
-                            onPressed: () async {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () async {
                               bool success = await groupProvider.finishRound(currentSession.id, activeRound, player.uid);
                               if (success) SnackbarHelper.showSuccess(context, '${player.name} won the round!');
                             },
-                            child: const Text('Winner'),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.green.shade200),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(player.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                  const Icon(Icons.emoji_events, color: Colors.amber),
+                                ],
+                              ),
+                            ),
                           ),
                         );
                       }).toList(),
@@ -90,20 +125,34 @@ class SessionDetailScreen extends StatelessWidget {
             if (currentSession.isActive && activeRound == null)
               ElevatedButton.icon(
                 icon: const Icon(Icons.add),
-                label: const Text('Start New Round'),
+                label: const Text('Start New Round', style: TextStyle(fontSize: 18)),
                 onPressed: () {
                   _showStartRoundDialog(context, groupProvider, currentSession.id, members);
                 },
-                style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(16)),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.all(20),
+                  backgroundColor: Theme.of(context).colorScheme.tertiary, // Green button for new round
+                ),
               ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             
             // Finished Rounds History
-            const Text('Round History', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.history, color: Colors.grey.shade700),
+                const SizedBox(width: 8),
+                const Text('Round History', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const SizedBox(height: 16),
             if (finishedRounds.isEmpty)
-              const Text('No rounds finished yet.')
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Text('No rounds finished yet.', style: TextStyle(color: Colors.grey.shade500, fontSize: 16)),
+                ),
+              )
             else
               ...finishedRounds.asMap().entries.map((entry) {
                 int index = entry.key;
@@ -111,15 +160,43 @@ class SessionDetailScreen extends StatelessWidget {
                 final winner = members.firstWhere((m) => m.uid == round.winnerUid, orElse: () => members.first);
                 
                 return Card(
-                  child: ListTile(
-                    leading: CircleAvatar(child: Text('${index + 1}')),
-                    title: Text('Winner: ${winner.name}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(color: Colors.grey.shade200),
+                  ),
+                  elevation: 0,
+                  color: Colors.white,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
                       children: [
-                        Text('${round.players.length} players participated'),
-                        if (round.expansions.isNotEmpty)
-                          Text('Expansions: ${round.expansions.join(', ')}', style: const TextStyle(fontStyle: FontStyle.italic)),
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(child: Text('${index + 1}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.amber))),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Winner: ${winner.name}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                              const SizedBox(height: 4),
+                              Text('${round.players.length} players participated', style: TextStyle(color: Colors.grey.shade600)),
+                              if (round.expansions.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4.0),
+                                  child: Text('Expansions: ${round.expansions.join(', ')}', style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12, color: Colors.deepOrange)),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.emoji_events, color: Colors.amber, size: 32),
                       ],
                     ),
                   ),
@@ -142,12 +219,19 @@ class SessionDetailScreen extends StatelessWidget {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Start Round'),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Row(
+                children: [
+                  Icon(Icons.play_circle_fill, color: Colors.deepOrange),
+                  SizedBox(width: 8),
+                  Text('Start Round'),
+                ],
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Players', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Text('Players', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     const SizedBox(height: 8),
                     ...sessionMembers.map((player) {
                       bool isSelected = selectedForRound.contains(player.uid);
@@ -155,6 +239,8 @@ class SessionDetailScreen extends StatelessWidget {
                         title: Text(player.name),
                         value: isSelected,
                         dense: true,
+                        activeColor: Theme.of(context).colorScheme.primary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         onChanged: (val) {
                           setState(() {
                             if (val == true) {
@@ -166,8 +252,11 @@ class SessionDetailScreen extends StatelessWidget {
                         },
                       );
                     }).toList(),
-                    const Divider(),
-                    const Text('Expansions', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      child: Divider(),
+                    ),
+                    const Text('Expansions (Optional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                     const SizedBox(height: 8),
                     ...expansions.map((exp) {
                       bool isSelected = selectedExpansions.contains(exp);
@@ -175,6 +264,8 @@ class SessionDetailScreen extends StatelessWidget {
                         title: Text(exp),
                         value: isSelected,
                         dense: true,
+                        activeColor: Theme.of(context).colorScheme.primary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         onChanged: (val) {
                           setState(() {
                             if (val == true) {

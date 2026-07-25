@@ -36,6 +36,12 @@ class GroupProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void clearActiveGroup() {
+    _activeGroup = null;
+    _sessionsSubscription?.cancel();
+    notifyListeners();
+  }
+
   Future<bool> createGroup(String name, String creatorUid) async {
     GroupModel? newGroup = await _dbService.createGroup(name, creatorUid);
     if (newGroup != null) {

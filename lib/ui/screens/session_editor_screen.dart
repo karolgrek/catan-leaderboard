@@ -66,52 +66,81 @@ class _SessionEditorScreenState extends State<SessionEditorScreen> {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Date Picker
-            ListTile(
-              title: const Text('Session Date'),
-              subtitle: Text(DateFormatter.toReadableDate(_selectedDate)),
-              trailing: const Icon(Icons.calendar_today),
-              onTap: _pickDate,
-              contentPadding: EdgeInsets.zero,
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(color: Colors.grey.shade300),
+              ),
+              color: Colors.white,
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                title: const Text('Session Date', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text(DateFormatter.toReadableDate(_selectedDate)),
+                trailing: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.calendar_today, color: Theme.of(context).colorScheme.primary),
+                ),
+                onTap: _pickDate,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             // Notes Field
             TextField(
               controller: _notesController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Notes (Optional)',
-                border: OutlineInputBorder(),
+                alignLabelWithHint: true,
+                prefixIcon: const Padding(
+                  padding: EdgeInsets.only(bottom: 48.0),
+                  child: Icon(Icons.edit_note),
+                ),
               ),
               maxLines: 3,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             // Player Selection
-            const Text('Select Players', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
+            const Text('Select Players', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
             Expanded(
               child: members.isEmpty
-                  ? const Center(child: Text('No players in this group.'))
+                  ? Center(child: Text('No players in this group.', style: TextStyle(color: Colors.grey.shade500)))
                   : ListView.builder(
                       itemCount: members.length,
                       itemBuilder: (context, index) {
                         final member = members[index];
                         final isSelected = _selectedPlayers.contains(member.uid);
-                        return CheckboxListTile(
-                          title: Text(member.name),
-                          value: isSelected,
-                          onChanged: (bool? value) {
-                            setState(() {
-                              if (value == true) {
-                                _selectedPlayers.add(member.uid);
-                              } else {
-                                _selectedPlayers.remove(member.uid);
-                              }
-                            });
-                          },
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: CheckboxListTile(
+                            title: Text(member.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                            value: isSelected,
+                            activeColor: Theme.of(context).colorScheme.primary,
+                            tileColor: isSelected ? Theme.of(context).colorScheme.primary.withOpacity(0.05) : Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.shade300),
+                            ),
+                            onChanged: (bool? value) {
+                              setState(() {
+                                if (value == true) {
+                                  _selectedPlayers.add(member.uid);
+                                } else {
+                                  _selectedPlayers.remove(member.uid);
+                                }
+                              });
+                            },
+                          ),
                         );
                       },
                     ),

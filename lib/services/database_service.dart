@@ -101,10 +101,11 @@ class DatabaseService {
   Stream<List<SessionModel>> getGroupSessions(String groupId) {
     return _firestore.collection('sessions')
       .where('groupId', isEqualTo: groupId)
-      .orderBy('date', descending: true)
       .snapshots()
       .map((snapshot) {
-        return snapshot.docs.map((doc) => SessionModel.fromMap(doc.data(), doc.id)).toList();
+        var sessions = snapshot.docs.map((doc) => SessionModel.fromMap(doc.data(), doc.id)).toList();
+        sessions.sort((a, b) => b.date.compareTo(a.date));
+        return sessions;
       });
   }
 
