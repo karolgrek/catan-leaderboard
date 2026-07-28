@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/session_model.dart';
 import '../../providers/group_provider.dart';
-import '../dialogs/round_dialogs.dart';
+import '../screens/round_editor_screen.dart';
 
 class FinishedRoundCard extends StatelessWidget {
   final int index;
@@ -62,6 +62,18 @@ class FinishedRoundCard extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 4.0),
                       child: Text('Notes: ${round.notes}', style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 13, color: Colors.blueGrey)),
                     ),
+                  
+                  if (round.winnerPhotoUrl != null || round.boardPhotoUrl != null || round.partyPhotoUrl != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Row(
+                        children: [
+                          if (round.winnerPhotoUrl != null) _buildThumbnail(round.winnerPhotoUrl!, Icons.emoji_events),
+                          if (round.boardPhotoUrl != null) _buildThumbnail(round.boardPhotoUrl!, Icons.grid_on),
+                          if (round.partyPhotoUrl != null) _buildThumbnail(round.partyPhotoUrl!, Icons.groups),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -72,12 +84,38 @@ class FinishedRoundCard extends StatelessWidget {
                 IconButton(
                   icon: Icon(Icons.edit, color: Colors.grey.shade400),
                   onPressed: () {
-                    showEditRoundDialog(context, groupProvider, sessionId, round, members);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RoundEditorScreen(
+                          sessionId: sessionId,
+                          round: round,
+                          members: members,
+                          isFinishing: false,
+                        ),
+                      ),
+                    );
                   },
                 ),
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThumbnail(String url, IconData icon) {
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(8),
+        image: DecorationImage(
+          image: NetworkImage(url),
+          fit: BoxFit.cover,
         ),
       ),
     );

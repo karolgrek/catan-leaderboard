@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../providers/group_provider.dart';
 import '../../utils/snackbar_helper.dart';
 import '../widgets/leaderboard_section.dart';
-import '../widgets/recent_sessions_section.dart';
+import '../widgets/sessions_section.dart';
 import 'session_editor_screen.dart';
 import 'group_selection_screen.dart';
 
@@ -54,10 +54,10 @@ class HomeScreen extends StatelessWidget {
             flex: 5,
             child: LeaderboardSection(leaderboard: leaderboard),
           ),
-          // Recent Sessions Section
+          // Sessions Section
           Expanded(
             flex: 4,
-            child: RecentSessionsSection(sessions: sessions),
+            child: SessionsSection(sessions: sessions),
           ),
         ],
       ),

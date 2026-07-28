@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/session_model.dart';
 import '../../providers/group_provider.dart';
-import '../../utils/snackbar_helper.dart';
-import '../dialogs/round_dialogs.dart';
+import '../screens/round_editor_screen.dart';
 
 class ActiveRoundCard extends StatelessWidget {
   final String sessionId;
@@ -46,7 +45,17 @@ class ActiveRoundCard extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.edit, color: Colors.green),
                   onPressed: () {
-                    showEditRoundDialog(context, groupProvider, sessionId, activeRound, members);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RoundEditorScreen(
+                          sessionId: sessionId,
+                          round: activeRound,
+                          members: members,
+                          isFinishing: false,
+                        ),
+                      ),
+                    );
                   },
                 ),
               ],
@@ -60,9 +69,19 @@ class ActiveRoundCard extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(12),
-                  onTap: () async {
-                    bool success = await groupProvider.finishRound(sessionId, activeRound, player.uid);
-                    if (success) SnackbarHelper.showSuccess(context, '${player.name} won the round!');
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RoundEditorScreen(
+                          sessionId: sessionId,
+                          round: activeRound,
+                          members: members,
+                          isFinishing: true,
+                          preselectedWinnerUid: player.uid,
+                        ),
+                      ),
+                    );
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

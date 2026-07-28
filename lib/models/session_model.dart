@@ -7,6 +7,9 @@ class RoundModel {
   final bool isActive;
   final List<String> expansions;
   final String notes;
+  final String? winnerPhotoUrl;
+  final String? boardPhotoUrl;
+  final String? partyPhotoUrl;
 
   RoundModel({
     required this.id,
@@ -15,6 +18,9 @@ class RoundModel {
     this.isActive = true,
     this.expansions = const [],
     this.notes = '',
+    this.winnerPhotoUrl,
+    this.boardPhotoUrl,
+    this.partyPhotoUrl,
   });
 
   factory RoundModel.fromMap(Map<String, dynamic> data) {
@@ -25,6 +31,9 @@ class RoundModel {
       isActive: data['isActive'] ?? false,
       expansions: List<String>.from(data['expansions'] ?? []),
       notes: data['notes'] ?? '',
+      winnerPhotoUrl: data['winnerPhotoUrl'],
+      boardPhotoUrl: data['boardPhotoUrl'],
+      partyPhotoUrl: data['partyPhotoUrl'],
     );
   }
 
@@ -36,6 +45,9 @@ class RoundModel {
       'isActive': isActive,
       'expansions': expansions,
       'notes': notes,
+      if (winnerPhotoUrl != null) 'winnerPhotoUrl': winnerPhotoUrl,
+      if (boardPhotoUrl != null) 'boardPhotoUrl': boardPhotoUrl,
+      if (partyPhotoUrl != null) 'partyPhotoUrl': partyPhotoUrl,
     };
   }
 }
