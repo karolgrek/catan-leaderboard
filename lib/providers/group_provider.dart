@@ -69,12 +69,21 @@ class GroupProvider extends ChangeNotifier {
     return await _dbService.finishSession(sessionId);
   }
 
-  Future<bool> addRound(String sessionId, List<String> roundPlayers, List<String> expansions) async {
-    return await _dbService.addRoundToSession(sessionId, roundPlayers, expansions);
+  Future<bool> updateSession(String sessionId, DateTime date, String notes, List<String> selectedPlayers) async {
+    return await _dbService.updateSession(sessionId, date, notes, selectedPlayers);
+  }
+
+
+  Future<bool> addRound(String sessionId, List<String> roundPlayers, List<String> expansions, String notes) async {
+    return await _dbService.addRoundToSession(sessionId, roundPlayers, expansions, notes);
   }
 
   Future<bool> finishRound(String sessionId, RoundModel round, String winnerUid) async {
     return await _dbService.finishRound(sessionId, round, winnerUid);
+  }
+
+  Future<bool> updateRound(String sessionId, RoundModel updatedRound) async {
+    return await _dbService.updateRound(sessionId, updatedRound);
   }
 
   Future<bool> seedTestUsers() async {
@@ -126,11 +135,23 @@ class GroupProvider extends ChangeNotifier {
       };
     }).toList();
 
-    // Sort by wins (descending), then by games played
+    // Sort by winrate (descending), then by games played
     leaderboard.sort((a, b) {
-      int winComparison = (b['wins'] as int).compareTo(a['wins'] as int);
-      if (winComparison != 0) return winComparison;
-      return (b['sessionsPlayed'] as int).compareTo(a['sessionsPlayed'] as int);
+      int aGames = a['sessionsPlayed'] as int;
+      int aWins = a['wins'] as int;
+      double aWinrate = aGames > 0 ? (aWins / aGames) : 0.0;
+
+      int bGames = b['sessionsPlayed'] as int;
+      int bWins = b['wins'] as int;
+      double bWinrate = bGames > 0 ? (bWins / bGames) : 0.0;
+
+      int winrateComparison = bWinrate.compareTo(aWinrate);
+      if (winrateComparison != 0) return winrateComparison;
+      
+      int gamesComparison = bGames.compareTo(aGames);
+      if (gamesComparison != 0) return gamesComparison;
+
+      return bWins.compareTo(aWins);
     });
     
     return leaderboard;

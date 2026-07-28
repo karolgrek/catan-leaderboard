@@ -2,117 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/group_provider.dart';
-import '../../utils/snackbar_helper.dart';
-import 'home_screen.dart';
+import '../dialogs/group_dialogs.dart';
 
-class GroupSelectionScreen extends StatefulWidget {
+class GroupSelectionScreen extends StatelessWidget {
   const GroupSelectionScreen({super.key});
-
-  @override
-  State<GroupSelectionScreen> createState() => _GroupSelectionScreenState();
-}
-
-class _GroupSelectionScreenState extends State<GroupSelectionScreen> {
-  final TextEditingController _joinGroupIdController = TextEditingController();
-  final TextEditingController _createGroupNameController = TextEditingController();
-
-  @override
-  void dispose() {
-    _joinGroupIdController.dispose();
-    _createGroupNameController.dispose();
-    super.dispose();
-  }
-
-  void _showJoinModal(BuildContext context, GroupProvider groupProvider, AuthProvider authProvider) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Join Group'),
-          content: TextField(
-            controller: _joinGroupIdController,
-            decoration: const InputDecoration(
-              labelText: 'Group ID',
-              border: OutlineInputBorder(),
-              hintText: 'Enter 20-character Group ID',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final groupId = _joinGroupIdController.text.trim();
-                if (groupId.isEmpty) {
-                  SnackbarHelper.showError(context, 'Please enter a Group ID.');
-                  return;
-                }
-                
-                Navigator.pop(context); // close modal first
-                
-                bool joined = await groupProvider.joinGroup(groupId, authProvider.user!.uid);
-                if (joined && mounted) {
-                  SnackbarHelper.showSuccess(context, 'Joined group! Select it from the list.');
-                  _joinGroupIdController.clear();
-                } else {
-                  if (mounted) SnackbarHelper.showError(context, 'Failed to join group.');
-                }
-              },
-              child: const Text('Join'),
-            )
-          ],
-        );
-      },
-    );
-  }
-
-  void _showCreateModal(BuildContext context, GroupProvider groupProvider, AuthProvider authProvider) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Create New Group'),
-          content: TextField(
-            controller: _createGroupNameController,
-            decoration: const InputDecoration(
-              labelText: 'Group Name',
-              border: OutlineInputBorder(),
-              hintText: 'e.g. Weekend Boardgamers',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final groupName = _createGroupNameController.text.trim();
-                if (groupName.isEmpty) {
-                  SnackbarHelper.showError(context, 'Please enter a group name.');
-                  return;
-                }
-                
-                Navigator.pop(context); // close modal first
-                
-                bool created = await groupProvider.createGroup(groupName, authProvider.user!.uid);
-                if (created && mounted) {
-                  SnackbarHelper.showSuccess(context, 'Group created successfully!');
-                  _createGroupNameController.clear();
-                  // main.dart Provider will automatically switch to HomeScreen
-                } else {
-                  if (mounted) SnackbarHelper.showError(context, 'Failed to create group.');
-                }
-              },
-              child: const Text('Create'),
-            )
-          ],
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -270,7 +163,7 @@ class _GroupSelectionScreenState extends State<GroupSelectionScreen> {
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () => _showJoinModal(context, groupProvider, authProvider),
+                      onPressed: () => showJoinModal(context, groupProvider, authProvider),
                       icon: const Icon(Icons.group_add),
                       label: const Text('Join'),
                     ),
@@ -278,7 +171,7 @@ class _GroupSelectionScreenState extends State<GroupSelectionScreen> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () => _showCreateModal(context, groupProvider, authProvider),
+                      onPressed: () => showCreateModal(context, groupProvider, authProvider),
                       icon: const Icon(Icons.add_circle),
                       label: const Text('Create'),
                     ),

@@ -1,20 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../models/session_model.dart';
 import '../../providers/group_provider.dart';
 import '../../utils/date_formatters.dart';
 import '../../utils/snackbar_helper.dart';
 
 class SessionEditorScreen extends StatefulWidget {
-  const SessionEditorScreen({super.key});
+  final SessionModel? session;
+
+  const SessionEditorScreen({super.key, this.session});
 
   @override
   State<SessionEditorScreen> createState() => _SessionEditorScreenState();
 }
 
 class _SessionEditorScreenState extends State<SessionEditorScreen> {
-  DateTime _selectedDate = DateTime.now();
-  final _notesController = TextEditingController();
-  final List<String> _selectedPlayers = [];
+  late DateTime _selectedDate;
+  late TextEditingController _notesController;
+  late List<String> _selectedPlayers;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDate = widget.session?.date ?? DateTime.now();
+    _notesController = TextEditingController(text: widget.session?.notes ?? '');
+    _selectedPlayers = widget.session != null ? List<String>.from(widget.session!.selectedPlayers) : [];
+  }
+
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
+  }
 
   void _pickDate() async {
     DateTime? picked = await showDatePicker(
@@ -37,11 +54,22 @@ class _SessionEditorScreenState extends State<SessionEditorScreen> {
     }
 
     final groupProvider = Provider.of<GroupProvider>(context, listen: false);
-    bool success = await groupProvider.createSession(
-      _selectedDate,
-      _notesController.text.trim(),
-      _selectedPlayers,
-    );
+    bool success;
+    
+    if (widget.session != null) {
+      success = await groupProvider.updateSession(
+        widget.session!.id,
+        _selectedDate,
+        _notesController.text.trim(),
+        _selectedPlayers,
+      );
+    } else {
+      success = await groupProvider.createSession(
+        _selectedDate,
+        _notesController.text.trim(),
+        _selectedPlayers,
+      );
+    }
 
     if (success && mounted) {
       Navigator.pop(context);
@@ -57,7 +85,7 @@ class _SessionEditorScreenState extends State<SessionEditorScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('New Session'),
+        title: Text(widget.session != null ? 'Edit Session' : 'New Session'),
         actions: [
           IconButton(
             icon: const Icon(Icons.save),

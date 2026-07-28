@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
 import '../models/group_model.dart';
 import '../models/session_model.dart';
 import '../models/user_model.dart';
@@ -98,6 +98,31 @@ class DatabaseService {
     }
   }
 
+  Future<bool> updateSession(String sessionId, DateTime date, String notes, List<String> selectedPlayers) async {
+    try {
+      await _firestore.collection('sessions').doc(sessionId).update({
+        'date': Timestamp.fromDate(date),
+        'notes': notes,
+        'selectedPlayers': selectedPlayers,
+      });
+      return true;
+    } catch (e) {
+      print(e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> deleteSession(String sessionId) async {
+    try {
+      await _firestore.collection('sessions').doc(sessionId).delete();
+      return true;
+    } catch (e) {
+      print(e.toString());
+      return false;
+    }
+  }
+
+
   Stream<List<SessionModel>> getGroupSessions(String groupId) {
     return _firestore.collection('sessions')
       .where('groupId', isEqualTo: groupId)
@@ -110,7 +135,7 @@ class DatabaseService {
   }
 
   // -- ROUNDS --
-  Future<bool> addRoundToSession(String sessionId, List<String> roundPlayers, List<String> expansions) async {
+  Future<bool> addRoundToSession(String sessionId, List<String> roundPlayers, List<String> expansions, String notes) async {
     try {
       final newRound = RoundModel(
         id: DateTime.now().millisecondsSinceEpoch.toString(), // simple unique id
@@ -118,6 +143,7 @@ class DatabaseService {
         winnerUid: null,
         isActive: true,
         expansions: expansions,
+        notes: notes,
       );
 
       await _firestore.collection('sessions').doc(sessionId).update({
@@ -148,6 +174,47 @@ class DatabaseService {
             roundData['isActive'] = false;
           }
           updatedRounds.add(roundData);
+        }
+        
+        transaction.update(docRef, {'rounds': updatedRounds});
+        return true;
+      });
+    } catch (e) {
+      print(e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> updateSessionRounds(String sessionId, List<RoundModel> rounds) async {
+    try {
+      await _firestore.collection('sessions').doc(sessionId).update({
+        'rounds': rounds.map((r) => r.toMap()).toList()
+      });
+      return true;
+    } catch (e) {
+      print(e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> updateRound(String sessionId, RoundModel updatedRound) async {
+    try {
+      DocumentReference docRef = _firestore.collection('sessions').doc(sessionId);
+      
+      return await _firestore.runTransaction((transaction) async {
+        DocumentSnapshot snapshot = await transaction.get(docRef);
+        if (!snapshot.exists) return false;
+        
+        List<dynamic> currentRoundsMap = snapshot.get('rounds') ?? [];
+        List<Map<String, dynamic>> updatedRounds = [];
+        
+        for (var r in currentRoundsMap) {
+          Map<String, dynamic> roundData = Map<String, dynamic>.from(r as Map);
+          if (roundData['id'] == updatedRound.id) {
+            updatedRounds.add(updatedRound.toMap());
+          } else {
+            updatedRounds.add(roundData);
+          }
         }
         
         transaction.update(docRef, {'rounds': updatedRounds});
