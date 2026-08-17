@@ -153,12 +153,27 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
       // Upload new photos if they exist
       if (_winnerPhoto != null) {
         finalWinnerPhotoUrl = await _storageService.uploadRoundPhoto(_winnerPhoto!, groupId, widget.sessionId, widget.round.id, 'winner');
+        if (finalWinnerPhotoUrl == null) {
+          if (mounted) SnackbarHelper.showError(context, 'Failed to upload Winner Photo.');
+          setState(() => _isLoading = false);
+          return;
+        }
       }
       if (_boardPhoto != null) {
         finalBoardPhotoUrl = await _storageService.uploadRoundPhoto(_boardPhoto!, groupId, widget.sessionId, widget.round.id, 'board');
+        if (finalBoardPhotoUrl == null) {
+          if (mounted) SnackbarHelper.showError(context, 'Failed to upload Board Photo.');
+          setState(() => _isLoading = false);
+          return;
+        }
       }
       if (_partyPhoto != null) {
         finalPartyPhotoUrl = await _storageService.uploadRoundPhoto(_partyPhoto!, groupId, widget.sessionId, widget.round.id, 'party');
+        if (finalPartyPhotoUrl == null) {
+          if (mounted) SnackbarHelper.showError(context, 'Failed to upload Party Photo.');
+          setState(() => _isLoading = false);
+          return;
+        }
       }
 
       final updatedRound = RoundModel(
