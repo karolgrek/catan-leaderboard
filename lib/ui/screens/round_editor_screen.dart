@@ -1,5 +1,6 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../models/session_model.dart';
 import '../../providers/group_provider.dart';
@@ -36,9 +37,12 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
   
   bool _isLoading = false;
 
-  File? _winnerPhoto;
-  File? _boardPhoto;
-  File? _partyPhoto;
+  XFile? _winnerPhoto;
+  Uint8List? _winnerPhotoBytes;
+  XFile? _boardPhoto;
+  Uint8List? _boardPhotoBytes;
+  XFile? _partyPhoto;
+  Uint8List? _partyPhotoBytes;
 
   String? _existingWinnerPhotoUrl;
   String? _existingBoardPhotoUrl;
@@ -103,18 +107,25 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
     );
   }
 
-  void _setImage(String type, File? file) {
+  Future<void> _setImage(String type, XFile? file) async {
+    Uint8List? bytes;
+    if (file != null) {
+      bytes = await file.readAsBytes();
+    }
     setState(() {
       if (type == 'winner') {
         _winnerPhoto = file;
+        _winnerPhotoBytes = bytes;
         if (file != null) _existingWinnerPhotoUrl = null; // overriding existing
       }
       if (type == 'board') {
         _boardPhoto = file;
+        _boardPhotoBytes = bytes;
         if (file != null) _existingBoardPhotoUrl = null;
       }
       if (type == 'party') {
         _partyPhoto = file;
+        _partyPhotoBytes = bytes;
         if (file != null) _existingPartyPhotoUrl = null;
       }
     });
@@ -122,9 +133,21 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
   
   void _removeExistingImage(String type) {
     setState(() {
-      if (type == 'winner') _existingWinnerPhotoUrl = null;
-      if (type == 'board') _existingBoardPhotoUrl = null;
-      if (type == 'party') _existingPartyPhotoUrl = null;
+      if (type == 'winner') {
+        _existingWinnerPhotoUrl = null;
+        _winnerPhoto = null;
+        _winnerPhotoBytes = null;
+      }
+      if (type == 'board') {
+        _existingBoardPhotoUrl = null;
+        _boardPhoto = null;
+        _boardPhotoBytes = null;
+      }
+      if (type == 'party') {
+        _existingPartyPhotoUrl = null;
+        _partyPhoto = null;
+        _partyPhotoBytes = null;
+      }
     });
   }
 
@@ -188,8 +211,8 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
     }
   }
 
-  Widget _buildPhotoPicker(String label, String type, File? file, String? existingUrl, IconData icon) {
-    bool hasImage = file != null || existingUrl != null;
+  Widget _buildPhotoPicker(String label, String type, Uint8List? bytes, String? existingUrl, IconData icon) {
+    bool hasImage = bytes != null || existingUrl != null;
     
     return GestureDetector(
       onTap: () => _pickImage(type),
@@ -202,7 +225,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
           border: Border.all(color: Colors.grey.shade300),
           image: hasImage
               ? DecorationImage(
-                  image: file != null ? FileImage(file) as ImageProvider : NetworkImage(existingUrl!),
+                  image: bytes != null ? MemoryImage(bytes) as ImageProvider : NetworkImage(existingUrl!),
                   fit: BoxFit.cover,
                 )
               : null,
@@ -228,7 +251,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
                       icon: const Icon(Icons.close, size: 16, color: Colors.white),
                       padding: EdgeInsets.zero,
                       onPressed: () {
-                        if (file != null) _setImage(type, null);
+                        if (bytes != null) _setImage(type, null);
                         if (existingUrl != null) _removeExistingImage(type);
                       },
                     ),
@@ -373,11 +396,11 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
                 Text('Add memories from this round!', style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
                 const SizedBox(height: 16),
                 
-                _buildPhotoPicker('Winner Photo', 'winner', _winnerPhoto, _existingWinnerPhotoUrl, Icons.emoji_events),
+                _buildPhotoPicker('Winner Photo', 'winner', _winnerPhotoBytes, _existingWinnerPhotoUrl, Icons.emoji_events),
                 const SizedBox(height: 16),
-                _buildPhotoPicker('Board Photo', 'board', _boardPhoto, _existingBoardPhotoUrl, Icons.grid_on),
+                _buildPhotoPicker('Board Photo', 'board', _boardPhotoBytes, _existingBoardPhotoUrl, Icons.grid_on),
                 const SizedBox(height: 16),
-                _buildPhotoPicker('Party Photo', 'party', _partyPhoto, _existingPartyPhotoUrl, Icons.groups),
+                _buildPhotoPicker('Party Photo', 'party', _partyPhotoBytes, _existingPartyPhotoUrl, Icons.groups),
                 
                 const SizedBox(height: 48),
                 

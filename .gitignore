@@ -46,3 +46,7 @@ app.*.map.json
 
 # Firebase DB Key
 firebase-db-key.json
+
+# Node & Firebase temporary
+node_modules/
+.firebase/

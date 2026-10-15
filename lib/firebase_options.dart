@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -64,5 +61,15 @@ class DefaultFirebaseOptions {
     projectId: 'catan-leaderboard-1be8b',
     storageBucket: 'catan-leaderboard-1be8b.firebasestorage.app',
     iosBundleId: 'com.catan.leaderboard.catanLeaderboard',
+  );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyAwQ7sc43DU0B10mBTPeko5LsCOhfLGHYA',
+    appId: '1:1056151846394:web:4d983adaee16682569f843',
+    messagingSenderId: '1056151846394',
+    projectId: 'catan-leaderboard-1be8b',
+    authDomain: 'catan-leaderboard-1be8b.firebaseapp.com',
+    storageBucket: 'catan-leaderboard-1be8b.firebasestorage.app',
+    measurementId: 'G-3TG0ESZ5J0',
   );
 }

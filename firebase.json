@@ -1,1 +1,22 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"catan-leaderboard-1be8b","appId":"1:1056151846394:android:0d66786a5b2cdb5669f843","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"catan-leaderboard-1be8b","configurations":{"android":"1:1056151846394:android:0d66786a5b2cdb5669f843","ios":"1:1056151846394:ios:afbad6c41a41d99569f843"}}}}}}
+{
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [{ "source": "**", "destination": "/index.html" }]
+  },
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "catan-leaderboard-1be8b",
+          "configurations": {
+            "web": "1:1056151846394:web:4d983adaee16682569f843"
+          }
+        }
+      }
+    }
+  }
+}
