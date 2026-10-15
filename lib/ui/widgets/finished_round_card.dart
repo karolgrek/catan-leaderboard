@@ -68,9 +68,9 @@ class FinishedRoundCard extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 8.0),
                       child: Row(
                         children: [
-                          if (round.winnerPhotoUrl != null) _buildThumbnail(round.winnerPhotoUrl!, Icons.emoji_events),
-                          if (round.boardPhotoUrl != null) _buildThumbnail(round.boardPhotoUrl!, Icons.grid_on),
-                          if (round.partyPhotoUrl != null) _buildThumbnail(round.partyPhotoUrl!, Icons.groups),
+                          if (round.winnerPhotoUrl != null) _buildThumbnail(context, round.winnerPhotoUrl!, Icons.emoji_events),
+                          if (round.boardPhotoUrl != null) _buildThumbnail(context, round.boardPhotoUrl!, Icons.grid_on),
+                          if (round.partyPhotoUrl != null) _buildThumbnail(context, round.partyPhotoUrl!, Icons.groups),
                         ],
                       ),
                     ),
@@ -105,17 +105,68 @@ class FinishedRoundCard extends StatelessWidget {
     );
   }
 
-  Widget _buildThumbnail(String url, IconData icon) {
-    return Container(
-      margin: const EdgeInsets.only(right: 8),
-      width: 32,
-      height: 32,
-      decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(8),
-        image: DecorationImage(
-          image: NetworkImage(url),
-          fit: BoxFit.cover,
+  Widget _buildThumbnail(BuildContext context, String url, IconData icon) {
+    return GestureDetector(
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (ctx) => Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.all(16),
+            child: Stack(
+              alignment: Alignment.topRight,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: InteractiveViewer(
+                    child: Image.network(
+                      url,
+                      fit: BoxFit.contain,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          width: double.infinity,
+                          height: 300,
+                          color: Colors.black54,
+                          child: const Center(child: CircularProgressIndicator(color: Colors.white)),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        width: double.infinity,
+                        height: 200,
+                        color: Colors.grey.shade900,
+                        child: const Center(child: Text('Failed to load image', style: TextStyle(color: Colors.white))),
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: CircleAvatar(
+                    backgroundColor: Colors.black54,
+                    child: IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.shade300),
+          image: DecorationImage(
+            image: NetworkImage(url),
+            fit: BoxFit.cover,
+          ),
         ),
       ),
     );

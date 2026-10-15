@@ -174,14 +174,35 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
       String? finalPartyPhotoUrl = _existingPartyPhotoUrl;
 
       // Upload new photos if they exist
-      if (_winnerPhoto != null) {
-        finalWinnerPhotoUrl = await _storageService.uploadRoundPhoto(_winnerPhoto!, groupId, widget.sessionId, widget.round.id, 'winner');
+      if (_winnerPhotoBytes != null) {
+        finalWinnerPhotoUrl = await _storageService.uploadRoundPhotoBytes(
+          bytes: _winnerPhotoBytes!,
+          fileNameHint: _winnerPhoto?.name ?? 'winner.jpg',
+          groupId: groupId,
+          sessionId: widget.sessionId,
+          roundId: widget.round.id,
+          photoType: 'winner',
+        );
       }
-      if (_boardPhoto != null) {
-        finalBoardPhotoUrl = await _storageService.uploadRoundPhoto(_boardPhoto!, groupId, widget.sessionId, widget.round.id, 'board');
+      if (_boardPhotoBytes != null) {
+        finalBoardPhotoUrl = await _storageService.uploadRoundPhotoBytes(
+          bytes: _boardPhotoBytes!,
+          fileNameHint: _boardPhoto?.name ?? 'board.jpg',
+          groupId: groupId,
+          sessionId: widget.sessionId,
+          roundId: widget.round.id,
+          photoType: 'board',
+        );
       }
-      if (_partyPhoto != null) {
-        finalPartyPhotoUrl = await _storageService.uploadRoundPhoto(_partyPhoto!, groupId, widget.sessionId, widget.round.id, 'party');
+      if (_partyPhotoBytes != null) {
+        finalPartyPhotoUrl = await _storageService.uploadRoundPhotoBytes(
+          bytes: _partyPhotoBytes!,
+          fileNameHint: _partyPhoto?.name ?? 'party.jpg',
+          groupId: groupId,
+          sessionId: widget.sessionId,
+          roundId: widget.round.id,
+          photoType: 'party',
+        );
       }
 
       final updatedRound = RoundModel(
@@ -205,7 +226,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
         if (mounted) SnackbarHelper.showError(context, 'Failed to save round.');
       }
     } catch (e) {
-      if (mounted) SnackbarHelper.showError(context, 'An error occurred.');
+      if (mounted) SnackbarHelper.showError(context, 'Chyba pri ukladaní/nahrávaní: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
