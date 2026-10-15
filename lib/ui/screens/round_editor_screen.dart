@@ -232,14 +232,66 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
     }
   }
 
+  void _viewFullPhoto(Uint8List? bytes, String? url) {
+    if (bytes == null && url == null) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(16),
+        child: Stack(
+          alignment: Alignment.topRight,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: InteractiveViewer(
+                child: bytes != null 
+                    ? Image.memory(bytes, fit: BoxFit.contain)
+                    : Image.network(
+                        url!, 
+                        fit: BoxFit.contain,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            width: double.infinity,
+                            height: 300,
+                            color: Colors.black54,
+                            child: const Center(child: CircularProgressIndicator(color: Colors.white)),
+                          );
+                        },
+                      ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: CircleAvatar(
+                backgroundColor: Colors.black54,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildPhotoPicker(String label, String type, Uint8List? bytes, String? existingUrl, IconData icon) {
     bool hasImage = bytes != null || existingUrl != null;
     
     return GestureDetector(
-      onTap: () => _pickImage(type),
+      onTap: () {
+        if (hasImage) {
+          _viewFullPhoto(bytes, existingUrl);
+        } else {
+          _pickImage(type);
+        }
+      },
       child: Container(
         width: double.infinity,
-        height: 120,
+        height: 130,
         decoration: BoxDecoration(
           color: Colors.grey.shade100,
           borderRadius: BorderRadius.circular(16),
@@ -265,17 +317,45 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
                 alignment: Alignment.topRight,
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: CircleAvatar(
-                    backgroundColor: Colors.black54,
-                    radius: 16,
-                    child: IconButton(
-                      icon: const Icon(Icons.close, size: 16, color: Colors.white),
-                      padding: EdgeInsets.zero,
-                      onPressed: () {
-                        if (bytes != null) _setImage(type, null);
-                        if (existingUrl != null) _removeExistingImage(type);
-                      },
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: Colors.black54,
+                        radius: 16,
+                        child: IconButton(
+                          icon: const Icon(Icons.fullscreen, size: 16, color: Colors.white),
+                          padding: EdgeInsets.zero,
+                          tooltip: 'Zobraziť celú fotku',
+                          onPressed: () => _viewFullPhoto(bytes, existingUrl),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      CircleAvatar(
+                        backgroundColor: Colors.black54,
+                        radius: 16,
+                        child: IconButton(
+                          icon: const Icon(Icons.edit, size: 16, color: Colors.white),
+                          padding: EdgeInsets.zero,
+                          tooltip: 'Zmeniť fotku',
+                          onPressed: () => _pickImage(type),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      CircleAvatar(
+                        backgroundColor: Colors.black54,
+                        radius: 16,
+                        child: IconButton(
+                          icon: const Icon(Icons.close, size: 16, color: Colors.white),
+                          padding: EdgeInsets.zero,
+                          tooltip: 'Odstrániť',
+                          onPressed: () {
+                            if (bytes != null) _setImage(type, null);
+                            if (existingUrl != null) _removeExistingImage(type);
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

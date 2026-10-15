@@ -10,7 +10,6 @@ class StorageService {
     try {
       return await _picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 70, // Kompresia
       );
     } catch (e) {
       debugPrint('Error picking image: $e');
@@ -22,7 +21,6 @@ class StorageService {
     try {
       return await _picker.pickImage(
         source: ImageSource.camera,
-        imageQuality: 70, // Kompresia
       );
     } catch (e) {
       debugPrint('Error taking photo: $e');

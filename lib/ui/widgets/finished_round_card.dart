@@ -107,6 +107,7 @@ class FinishedRoundCard extends StatelessWidget {
 
   Widget _buildThumbnail(BuildContext context, String url, IconData icon) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: () {
         showDialog(
           context: context,
@@ -157,16 +158,22 @@ class FinishedRoundCard extends StatelessWidget {
       },
       child: Container(
         margin: const EdgeInsets.only(right: 8),
-        width: 36,
-        height: 36,
+        width: 44,
+        height: 44,
         decoration: BoxDecoration(
-          color: Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.shade300),
-          image: DecorationImage(
-            image: NetworkImage(url),
-            fit: BoxFit.cover,
-          ),
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.grey.shade300, width: 1.5),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Image.network(
+          url,
+          fit: BoxFit.cover,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.grey.shade400)));
+          },
+          errorBuilder: (context, error, stackTrace) => Icon(icon, size: 20, color: Colors.grey.shade500),
         ),
       ),
     );
