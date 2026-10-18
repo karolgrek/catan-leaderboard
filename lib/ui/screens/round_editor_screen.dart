@@ -54,7 +54,14 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
   void initState() {
     super.initState();
     _selectedPlayers = List<String>.from(widget.round.players);
-    _selectedExpansions = List<String>.from(widget.round.expansions);
+    _selectedExpansions = widget.round.expansions
+        .where((e) => e != 'Základ')
+        .map((e) {
+      if (e == 'Doplněk pro 5 – 6 hráčů' || e == 'Doplnek pro 5-6') return 'Doplnok pre 5 – 6 hráčov';
+      if (e == 'Nejlepší přátelé' || e == 'Rozšíření Nejlepší přátelé') return 'Najlepší priatelia';
+      if (e == 'Velikonoční zajíček a Santa Claus' || e == 'Sváteční rozšíření Velikonoční zajíček a Santa Claus') return 'Veľkonočný zajačik a Santa Claus';
+      return e;
+    }).toList();
     _notesController = TextEditingController(text: widget.round.notes);
     
     if (widget.isFinishing) {
@@ -84,7 +91,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
             children: [
               ListTile(
                 leading: const Icon(Icons.camera_alt),
-                title: const Text('Take a photo'),
+                title: const Text('Odfotiť'),
                 onTap: () async {
                   Navigator.pop(context);
                   final file = await _storageService.takePhoto();
@@ -93,7 +100,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library),
-                title: const Text('Choose from gallery'),
+                title: const Text('Vybrať z galérie'),
                 onTap: () async {
                   Navigator.pop(context);
                   final file = await _storageService.pickImage();
@@ -221,9 +228,9 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
       
       if (success && mounted) {
         Navigator.pop(context);
-        SnackbarHelper.showSuccess(context, widget.isFinishing ? 'Round finished successfully!' : 'Round updated!');
+        SnackbarHelper.showSuccess(context, widget.isFinishing ? 'Kolo bolo úspešne ukončené!' : 'Kolo bolo upravené!');
       } else {
-        if (mounted) SnackbarHelper.showError(context, 'Failed to save round.');
+        if (mounted) SnackbarHelper.showError(context, 'Chyba pri ukladaní kola.');
       }
     } catch (e) {
       if (mounted) SnackbarHelper.showError(context, 'Chyba pri ukladaní/nahrávaní: $e');
@@ -367,7 +374,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isFinishing ? 'Finish Round' : 'Edit Round'),
+        title: Text(widget.isFinishing ? 'Ukončiť kolo' : 'Upraviť kolo'),
       ),
       body: _isLoading 
         ? const Center(child: Column(
@@ -375,7 +382,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
             children: [
               CircularProgressIndicator(),
               SizedBox(height: 16),
-              Text('Saving...'),
+              Text('Ukladám...'),
             ],
           ))
         : SingleChildScrollView(
@@ -384,7 +391,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (!widget.isFinishing) ...[
-                  const Text('Players', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text('Hráči', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Container(
                     decoration: BoxDecoration(
@@ -409,6 +416,15 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
                                 _selectedPlayers.remove(player.uid);
                                 if (_selectedWinnerUid == player.uid) _selectedWinnerUid = null;
                               }
+
+                              // Auto-select or unselect 5-6 player extension
+                              if (_selectedPlayers.length > 4) {
+                                if (!_selectedExpansions.contains('Doplnok pre 5 – 6 hráčov')) {
+                                  _selectedExpansions.add('Doplnok pre 5 – 6 hráčov');
+                                }
+                              } else {
+                                _selectedExpansions.remove('Doplnok pre 5 – 6 hráčov');
+                              }
                             });
                           },
                         );
@@ -420,7 +436,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
 
                 // Winner Selector (Shown if finishing or if it's already finished)
                 if (widget.isFinishing || !widget.round.isActive) ...[
-                  const Text('Select Winner', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text('Výber víťaza', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Container(
                     decoration: BoxDecoration(
@@ -447,7 +463,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
                 ],
 
                 if (!widget.isFinishing) ...[
-                  const Text('Expansions (Optional)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text('Rozšírenia', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Container(
                     decoration: BoxDecoration(
@@ -479,12 +495,12 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  const Text('Notes (Optional)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text('Poznámka (voliteľná)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   TextField(
                     controller: _notesController,
                     decoration: InputDecoration(
-                      hintText: 'Any special notes for this round?',
+                      hintText: 'Poznámka ku kolu...',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     maxLines: 2,
@@ -492,16 +508,16 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
                   const SizedBox(height: 24),
                 ],
                 
-                const Text('Photos (Optional)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text('Fotky (voliteľné)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                Text('Add memories from this round!', style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
+                Text('Pridaj spomienky a fotky z tohto kola!', style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
                 const SizedBox(height: 16),
                 
-                _buildPhotoPicker('Winner Photo', 'winner', _winnerPhotoBytes, _existingWinnerPhotoUrl, Icons.emoji_events),
+                _buildPhotoPicker('Fotka víťaza', 'winner', _winnerPhotoBytes, _existingWinnerPhotoUrl, Icons.person),
                 const SizedBox(height: 16),
-                _buildPhotoPicker('Board Photo', 'board', _boardPhotoBytes, _existingBoardPhotoUrl, Icons.grid_on),
+                _buildPhotoPicker('Fotka hracej plochy', 'board', _boardPhotoBytes, _existingBoardPhotoUrl, Icons.grid_on),
                 const SizedBox(height: 16),
-                _buildPhotoPicker('Party Photo', 'party', _partyPhotoBytes, _existingPartyPhotoUrl, Icons.groups),
+                _buildPhotoPicker('Spoločná fotka', 'party', _partyPhotoBytes, _existingPartyPhotoUrl, Icons.groups),
                 
                 const SizedBox(height: 48),
                 
@@ -510,7 +526,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
                   height: 56,
                   child: ElevatedButton(
                     onPressed: _saveRound,
-                    child: Text(widget.isFinishing ? 'Finish Round' : 'Save Changes', style: const TextStyle(fontSize: 18)),
+                    child: Text(widget.isFinishing ? 'Ukončiť kolo' : 'Uložiť zmeny', style: const TextStyle(fontSize: 18)),
                   ),
                 )
               ],

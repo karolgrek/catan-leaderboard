@@ -39,6 +39,11 @@ class FinishedRoundCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasPhotos = round.winnerPhotoUrl != null || round.boardPhotoUrl != null || round.partyPhotoUrl != null;
 
+    final playerNames = round.players.map((uid) {
+      final p = members.cast<dynamic>().firstWhere((m) => m.uid == uid, orElse: () => null);
+      return p != null ? p.name : uid;
+    }).join(', ');
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
@@ -77,31 +82,36 @@ class FinishedRoundCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Winner: ${winner.name}',
+                      'Víťaz: ${winner.name}',
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${round.players.length} players participated',
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                      'Hráči: $playerNames',
+                      style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
                     ),
-                    if (round.expansions.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4.0),
-                        child: Text(
-                          'Expansions: ${round.expansions.join(', ')}',
-                          style: const TextStyle(
-                            fontStyle: FontStyle.italic,
-                            fontSize: 12,
-                            color: Colors.deepOrange,
+                    Builder(
+                      builder: (context) {
+                        final displayExpansions = round.expansions.where((e) => e != 'Základ').toList();
+                        if (displayExpansions.isEmpty) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 4.0),
+                          child: Text(
+                            'Rozšírenia: ${displayExpansions.join(', ')}',
+                            style: const TextStyle(
+                              fontStyle: FontStyle.italic,
+                              fontSize: 12,
+                              color: Colors.deepOrange,
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
+                    ),
                     if (round.notes.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(top: 4.0),
                         child: Text(
-                          'Notes: ${round.notes}',
+                          'Poznámka: ${round.notes}',
                           style: const TextStyle(
                             fontStyle: FontStyle.italic,
                             fontSize: 13,
@@ -117,11 +127,11 @@ class FinishedRoundCard extends StatelessWidget {
                           runSpacing: 8,
                           children: [
                             if (round.winnerPhotoUrl != null)
-                              _buildThumbnail(context, round.winnerPhotoUrl!, 'Winner', Icons.person),
+                              _buildThumbnail(context, round.winnerPhotoUrl!, 'Víťaz', Icons.person),
                             if (round.boardPhotoUrl != null)
-                              _buildThumbnail(context, round.boardPhotoUrl!, 'Board', Icons.grid_on),
+                              _buildThumbnail(context, round.boardPhotoUrl!, 'Plocha', Icons.grid_on),
                             if (round.partyPhotoUrl != null)
-                              _buildThumbnail(context, round.partyPhotoUrl!, 'Party', Icons.groups),
+                              _buildThumbnail(context, round.partyPhotoUrl!, 'Párty', Icons.groups),
                           ],
                         ),
                       ),
