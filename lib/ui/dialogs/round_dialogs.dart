@@ -21,14 +21,14 @@ void showStartRoundDialog(BuildContext context, GroupProvider provider, String s
               children: [
                 Icon(Icons.play_circle_fill, color: Colors.deepOrange),
                 SizedBox(width: 8),
-                Text('Start Round'),
+                Text('Nové kolo'),
               ],
             ),
             content: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Players', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const Text('Hráči', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
                   ...sessionMembers.map((player) {
                     bool isSelected = selectedForRound.contains(player.uid);
@@ -45,6 +45,15 @@ void showStartRoundDialog(BuildContext context, GroupProvider provider, String s
                           } else {
                             selectedForRound.remove(player.uid);
                           }
+
+                          // Auto-select or unselect 5-6 player extension
+                          if (selectedForRound.length > 4) {
+                            if (!selectedExpansions.contains('Doplnok pre 5 – 6 hráčov')) {
+                              selectedExpansions.add('Doplnok pre 5 – 6 hráčov');
+                            }
+                          } else {
+                            selectedExpansions.remove('Doplnok pre 5 – 6 hráčov');
+                          }
                         });
                       },
                     );
@@ -53,7 +62,7 @@ void showStartRoundDialog(BuildContext context, GroupProvider provider, String s
                     padding: EdgeInsets.symmetric(vertical: 8.0),
                     child: Divider(),
                   ),
-                  const Text('Expansions (Optional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const Text('Rozšírenia', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
                   ...expansions.map((exp) {
                     bool isSelected = selectedExpansions.contains(exp);
@@ -78,12 +87,12 @@ void showStartRoundDialog(BuildContext context, GroupProvider provider, String s
                     padding: EdgeInsets.symmetric(vertical: 8.0),
                     child: Divider(),
                   ),
-                  const Text('Notes (Optional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const Text('Poznámka (voliteľná)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                   const SizedBox(height: 8),
                   TextField(
                     controller: notesController,
                     decoration: const InputDecoration(
-                      hintText: 'Any special notes for this round?',
+                      hintText: 'Poznámka ku kolu...',
                       border: OutlineInputBorder(),
                     ),
                     maxLines: 2,
@@ -92,17 +101,17 @@ void showStartRoundDialog(BuildContext context, GroupProvider provider, String s
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Zrušiť')),
               ElevatedButton(
                 onPressed: () async {
                   if (selectedForRound.isEmpty) {
-                    SnackbarHelper.showError(context, 'Select at least 1 player');
+                    SnackbarHelper.showError(context, 'Vyber aspoň 1 hráča');
                     return;
                   }
                   Navigator.pop(context);
                   await provider.addRound(sessionId, selectedForRound, selectedExpansions, notesController.text.trim());
                 },
-                child: const Text('Start'),
+                child: const Text('Začať kolo'),
               )
             ],
           );
