@@ -21,91 +21,130 @@ class FinishedRoundCard extends StatelessWidget {
     required this.groupProvider,
   });
 
+  void _openEditor(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => RoundEditorScreen(
+          sessionId: sessionId,
+          round: round,
+          members: members,
+          isFinishing: false,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final hasPhotos = round.winnerPhotoUrl != null || round.boardPhotoUrl != null || round.partyPhotoUrl != null;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
+      clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: Colors.grey.shade200),
       ),
       elevation: 0,
       color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.amber.withOpacity(0.2),
-                shape: BoxShape.circle,
+      child: InkWell(
+        onTap: () => _openEditor(context),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.amber.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                ),
+                child: Center(
+                  child: Text(
+                    '#${index + 1}',
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.amber),
+                  ),
+                ),
               ),
-              child: Center(child: Text('${index + 1}', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.amber))),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Winner: ${winner.name}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  const SizedBox(height: 4),
-                  Text('${round.players.length} players participated', style: TextStyle(color: Colors.grey.shade600)),
-                  if (round.expansions.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
-                      child: Text('Expansions: ${round.expansions.join(', ')}', style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 12, color: Colors.deepOrange)),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Winner: ${winner.name}',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
-                  if (round.notes.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
-                      child: Text('Notes: ${round.notes}', style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 13, color: Colors.blueGrey)),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${round.players.length} players participated',
+                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                     ),
-                  
-                  if (round.winnerPhotoUrl != null || round.boardPhotoUrl != null || round.partyPhotoUrl != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Row(
-                        children: [
-                          if (round.winnerPhotoUrl != null) _buildThumbnail(context, round.winnerPhotoUrl!, Icons.emoji_events),
-                          if (round.boardPhotoUrl != null) _buildThumbnail(context, round.boardPhotoUrl!, Icons.grid_on),
-                          if (round.partyPhotoUrl != null) _buildThumbnail(context, round.partyPhotoUrl!, Icons.groups),
-                        ],
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            Row(
-              children: [
-                const Icon(Icons.emoji_events, color: Colors.amber, size: 32),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: Icon(Icons.edit, color: Colors.grey.shade400),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => RoundEditorScreen(
-                          sessionId: sessionId,
-                          round: round,
-                          members: members,
-                          isFinishing: false,
+                    if (round.expansions.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4.0),
+                        child: Text(
+                          'Expansions: ${round.expansions.join(', ')}',
+                          style: const TextStyle(
+                            fontStyle: FontStyle.italic,
+                            fontSize: 12,
+                            color: Colors.deepOrange,
+                          ),
                         ),
                       ),
-                    );
-                  },
+                    if (round.notes.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4.0),
+                        child: Text(
+                          'Notes: ${round.notes}',
+                          style: const TextStyle(
+                            fontStyle: FontStyle.italic,
+                            fontSize: 13,
+                            color: Colors.blueGrey,
+                          ),
+                        ),
+                      ),
+                    if (hasPhotos)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10.0),
+                        child: Wrap(
+                          spacing: 10,
+                          runSpacing: 8,
+                          children: [
+                            if (round.winnerPhotoUrl != null)
+                              _buildThumbnail(context, round.winnerPhotoUrl!, 'Winner', Icons.person),
+                            if (round.boardPhotoUrl != null)
+                              _buildThumbnail(context, round.boardPhotoUrl!, 'Board', Icons.grid_on),
+                            if (round.partyPhotoUrl != null)
+                              _buildThumbnail(context, round.partyPhotoUrl!, 'Party', Icons.groups),
+                          ],
+                        ),
+                      ),
+                  ],
                 ),
-              ],
-            ),
-          ],
+              ),
+              const SizedBox(width: 8),
+              Padding(
+                padding: const EdgeInsets.only(top: 2.0),
+                child: Icon(
+                  Icons.edit_outlined,
+                  color: Colors.grey.shade400,
+                  size: 20,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildThumbnail(BuildContext context, String url, IconData icon) {
+  Widget _buildThumbnail(BuildContext context, String url, String label, IconData icon) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () {
@@ -157,23 +196,61 @@ class FinishedRoundCard extends StatelessWidget {
         );
       },
       child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        width: 44,
-        height: 44,
+        width: 70,
+        height: 70,
         decoration: BoxDecoration(
           color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.grey.shade300, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         clipBehavior: Clip.antiAlias,
-        child: Image.network(
-          url,
-          fit: BoxFit.cover,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.grey.shade400)));
-          },
-          errorBuilder: (context, error, stackTrace) => Icon(icon, size: 20, color: Colors.grey.shade500),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(
+              url,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.grey.shade400,
+                    ),
+                  ),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) => Icon(icon, size: 24, color: Colors.grey.shade400),
+            ),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                color: Colors.black.withOpacity(0.55),
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
