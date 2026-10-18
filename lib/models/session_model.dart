@@ -1,5 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+const List<String> kCatanExpansions = [
+  'Doplněk pro 5 – 6 hráčů',
+  'Nejlepší přátelé',
+  'Velikonoční zajíček a Santa Claus',
+];
+
 class RoundModel {
   final String id;
   final List<String> players;

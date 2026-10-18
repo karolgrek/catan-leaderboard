@@ -48,7 +48,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
   String? _existingBoardPhotoUrl;
   String? _existingPartyPhotoUrl;
   
-  final expansionsList = ['Seafarers', 'Cities & Knights', 'Traders & Barbarians', 'Explorers & Pirates'];
+  final expansionsList = kCatanExpansions;
 
   @override
   void initState() {

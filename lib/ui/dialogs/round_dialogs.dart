@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../models/session_model.dart';
 import '../../providers/group_provider.dart';
 import '../../utils/snackbar_helper.dart';
 
 void showStartRoundDialog(BuildContext context, GroupProvider provider, String sessionId, List<dynamic> sessionMembers) {
   List<String> selectedForRound = [];
   List<String> selectedExpansions = [];
-  final expansions = ['Seafarers', 'Cities & Knights', 'Traders & Barbarians', 'Explorers & Pirates'];
+  final expansions = kCatanExpansions;
   final TextEditingController notesController = TextEditingController();
   
   showDialog(
