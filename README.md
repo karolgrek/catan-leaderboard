@@ -10,9 +10,9 @@ A thematic mobile & web companion app for tracking **Settlers of Catan** game ni
 | :---: | :---: | :---: |
 | <img src="docs/screenshots/01_auth_screen.png" width="260" alt="Login Screen" /> | <img src="docs/screenshots/02_home_leaderboard.png" width="260" alt="Leaderboard and Sessions" /> | <img src="docs/screenshots/03_session_detail.png" width="260" alt="Session Detail" /> |
 
-| Round Editor & Expansions | Thematic Catan Notifications |
-| :---: | :---: |
-| <img src="docs/screenshots/04_round_editor.png" width="260" alt="Round Editor" /> | <img src="docs/screenshots/05_notifications.png" width="260" alt="Catan Notifications" /> |
+| Round Editor & Expansions | Round Photos (Winner, Board & Group) | Thematic Catan Notifications |
+| :---: | :---: | :---: |
+| <img src="docs/screenshots/04_round_editor.png" width="260" alt="Round Editor" /> | <img src="docs/screenshots/05_round_photos.png" width="260" alt="Round Photos" /> | <img src="docs/screenshots/06_notifications.png" width="260" alt="Catan Notifications" /> |
 
 ---
 
