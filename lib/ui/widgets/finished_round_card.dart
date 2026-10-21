@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../models/session_model.dart';
 import '../../providers/group_provider.dart';
 import '../screens/round_editor_screen.dart';
+import '../theme/app_theme.dart';
+import 'round_photo_picker.dart';
 
 class FinishedRoundCard extends StatelessWidget {
   final int index;
@@ -53,10 +55,10 @@ class FinishedRoundCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.grey.shade200),
+        side: const BorderSide(color: AppColors.cardBorder),
       ),
       elevation: 0,
-      color: Colors.white,
+      color: AppColors.cardSurface,
       child: InkWell(
         onTap: () => _openEditor(context),
         borderRadius: BorderRadius.circular(16),
@@ -69,16 +71,19 @@ class FinishedRoundCard extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: Colors.amber.withOpacity(0.15),
+                  color: AppColors.chitBackground,
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                  border: Border.all(
+                    color: AppColors.chitBorder,
+                    width: 1.8,
+                  ),
                 ),
                 child: Center(
                   child: Text(
                     '#${index + 1}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.amber,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ),
@@ -93,13 +98,14 @@ class FinishedRoundCard extends StatelessWidget {
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Players: $playerNames',
-                      style: TextStyle(
-                        color: Colors.grey.shade700,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
                         fontSize: 13,
                       ),
                     ),
@@ -126,7 +132,7 @@ class FinishedRoundCard extends StatelessWidget {
                             style: const TextStyle(
                               fontStyle: FontStyle.italic,
                               fontSize: 12,
-                              color: Colors.deepOrange,
+                              color: AppColors.primaryBrick,
                             ),
                           ),
                         );
@@ -152,25 +158,22 @@ class FinishedRoundCard extends StatelessWidget {
                           runSpacing: 8,
                           children: [
                             if (round.winnerPhotoUrl != null)
-                              _buildThumbnail(
-                                context,
-                                round.winnerPhotoUrl!,
-                                'Winner',
-                                Icons.person,
+                              RoundPhotoThumbnail(
+                                url: round.winnerPhotoUrl!,
+                                label: 'Winner',
+                                icon: Icons.person,
                               ),
                             if (round.boardPhotoUrl != null)
-                              _buildThumbnail(
-                                context,
-                                round.boardPhotoUrl!,
-                                'Board',
-                                Icons.grid_on,
+                              RoundPhotoThumbnail(
+                                url: round.boardPhotoUrl!,
+                                label: 'Board',
+                                icon: Icons.grid_on,
                               ),
                             if (round.partyPhotoUrl != null)
-                              _buildThumbnail(
-                                context,
-                                round.partyPhotoUrl!,
-                                'Party',
-                                Icons.groups,
+                              RoundPhotoThumbnail(
+                                url: round.partyPhotoUrl!,
+                                label: 'Party',
+                                icon: Icons.groups,
                               ),
                           ],
                         ),
@@ -179,143 +182,16 @@ class FinishedRoundCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Padding(
-                padding: const EdgeInsets.only(top: 2.0),
+              const Padding(
+                padding: EdgeInsets.only(top: 2.0),
                 child: Icon(
                   Icons.edit_outlined,
-                  color: Colors.grey.shade400,
+                  color: AppColors.textSecondary,
                   size: 20,
                 ),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildThumbnail(
-    BuildContext context,
-    String url,
-    String label,
-    IconData icon,
-  ) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () {
-        showDialog(
-          context: context,
-          builder: (ctx) => Dialog(
-            backgroundColor: Colors.transparent,
-            insetPadding: const EdgeInsets.all(16),
-            child: Stack(
-              alignment: Alignment.topRight,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: InteractiveViewer(
-                    child: Image.network(
-                      url,
-                      fit: BoxFit.contain,
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          width: double.infinity,
-                          height: 300,
-                          color: Colors.black54,
-                          child: const Center(
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                            ),
-                          ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        width: double.infinity,
-                        height: 200,
-                        color: Colors.grey.shade900,
-                        child: const Center(
-                          child: Text(
-                            'Failed to load image',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: CircleAvatar(
-                    backgroundColor: Colors.black54,
-                    child: IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-      child: Container(
-        width: 70,
-        height: 70,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade300, width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.network(
-              url,
-              fit: BoxFit.cover,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Center(
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.grey.shade400,
-                    ),
-                  ),
-                );
-              },
-              errorBuilder: (context, error, stackTrace) =>
-                  Icon(icon, size: 24, color: Colors.grey.shade400),
-            ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                color: Colors.black.withOpacity(0.55),
-                child: Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );

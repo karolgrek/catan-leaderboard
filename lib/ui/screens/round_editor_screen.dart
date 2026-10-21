@@ -6,6 +6,7 @@ import '../../models/session_model.dart';
 import '../../providers/group_provider.dart';
 import '../../services/storage_service.dart';
 import '../../utils/snackbar_helper.dart';
+import '../widgets/round_photo_picker.dart';
 
 class RoundEditorScreen extends StatefulWidget {
   final String sessionId;
@@ -138,7 +139,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
     });
   }
 
-  void _removeExistingImage(String type) {
+  void _removeImage(String type) {
     setState(() {
       if (type == 'winner') {
         _existingWinnerPhotoUrl = null;
@@ -239,10 +240,8 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
           context,
           widget.isFinishing ? 'Round finished successfully!' : 'Round updated!',
         );
-      } else {
-        if (mounted) {
-          SnackbarHelper.showError(context, 'Failed to save round.');
-        }
+      } else if (mounted) {
+        SnackbarHelper.showError(context, 'Failed to save round.');
       }
     } catch (e) {
       if (mounted) {
@@ -251,170 +250,6 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  void _viewFullPhoto(Uint8List? bytes, String? url) {
-    if (bytes == null && url == null) return;
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(16),
-        child: Stack(
-          alignment: Alignment.topRight,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: InteractiveViewer(
-                child: bytes != null
-                    ? Image.memory(bytes, fit: BoxFit.contain)
-                    : Image.network(
-                        url!,
-                        fit: BoxFit.contain,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            width: double.infinity,
-                            height: 300,
-                            color: Colors.black54,
-                            child: const Center(
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: CircleAvatar(
-                backgroundColor: Colors.black54,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white),
-                  onPressed: () => Navigator.pop(ctx),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPhotoPicker(
-    String label,
-    String type,
-    Uint8List? bytes,
-    String? existingUrl,
-    IconData icon,
-  ) {
-    bool hasImage = bytes != null || existingUrl != null;
-
-    return GestureDetector(
-      onTap: () {
-        if (hasImage) {
-          _viewFullPhoto(bytes, existingUrl);
-        } else {
-          _pickImage(type);
-        }
-      },
-      child: Container(
-        width: double.infinity,
-        height: 130,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade300),
-          image: hasImage
-              ? DecorationImage(
-                  image: bytes != null
-                      ? MemoryImage(bytes) as ImageProvider
-                      : NetworkImage(existingUrl!),
-                  fit: BoxFit.cover,
-                )
-              : null,
-        ),
-        child: !hasImage
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, size: 32, color: Colors.grey.shade500),
-                  const SizedBox(height: 8),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: Colors.grey.shade700,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    'Tap to add photo',
-                    style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
-                  ),
-                ],
-              )
-            : Align(
-                alignment: Alignment.topRight,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: Colors.black54,
-                        radius: 16,
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.fullscreen,
-                            size: 16,
-                            color: Colors.white,
-                          ),
-                          padding: EdgeInsets.zero,
-                          tooltip: 'View full photo',
-                          onPressed: () => _viewFullPhoto(bytes, existingUrl),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      CircleAvatar(
-                        backgroundColor: Colors.black54,
-                        radius: 16,
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.edit,
-                            size: 16,
-                            color: Colors.white,
-                          ),
-                          padding: EdgeInsets.zero,
-                          tooltip: 'Change photo',
-                          onPressed: () => _pickImage(type),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      CircleAvatar(
-                        backgroundColor: Colors.black54,
-                        radius: 16,
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.close,
-                            size: 16,
-                            color: Colors.white,
-                          ),
-                          padding: EdgeInsets.zero,
-                          tooltip: 'Remove',
-                          onPressed: () {
-                            if (bytes != null) _setImage(type, null);
-                            if (existingUrl != null) _removeExistingImage(type);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-      ),
-    );
   }
 
   @override
@@ -610,32 +445,35 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
                   const SizedBox(height: 8),
                   Text(
                     'Add memories and photos from this round!',
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                    style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
                   ),
                   const SizedBox(height: 16),
 
-                  _buildPhotoPicker(
-                    'Winner Photo',
-                    'winner',
-                    _winnerPhotoBytes,
-                    _existingWinnerPhotoUrl,
-                    Icons.person,
+                  RoundPhotoPickerCard(
+                    label: 'Winner Photo',
+                    bytes: _winnerPhotoBytes,
+                    existingUrl: _existingWinnerPhotoUrl,
+                    icon: Icons.person,
+                    onPick: () => _pickImage('winner'),
+                    onRemove: () => _removeImage('winner'),
                   ),
                   const SizedBox(height: 16),
-                  _buildPhotoPicker(
-                    'Board Photo',
-                    'board',
-                    _boardPhotoBytes,
-                    _existingBoardPhotoUrl,
-                    Icons.grid_on,
+                  RoundPhotoPickerCard(
+                    label: 'Board Photo',
+                    bytes: _boardPhotoBytes,
+                    existingUrl: _existingBoardPhotoUrl,
+                    icon: Icons.grid_on,
+                    onPick: () => _pickImage('board'),
+                    onRemove: () => _removeImage('board'),
                   ),
                   const SizedBox(height: 16),
-                  _buildPhotoPicker(
-                    'Group Photo',
-                    'party',
-                    _partyPhotoBytes,
-                    _existingPartyPhotoUrl,
-                    Icons.groups,
+                  RoundPhotoPickerCard(
+                    label: 'Group Photo',
+                    bytes: _partyPhotoBytes,
+                    existingUrl: _existingPartyPhotoUrl,
+                    icon: Icons.groups,
+                    onPick: () => _pickImage('party'),
+                    onRemove: () => _removeImage('party'),
                   ),
 
                   const SizedBox(height: 48),
