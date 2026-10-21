@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../constants/app_strings.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
-  
+
   User? _user;
   UserModel? _userModel;
   bool _isLoading = true;
@@ -35,9 +36,10 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> signIn(String email, String password) async {
     _isLoading = true;
     notifyListeners();
-    
-    User? result = await _authService.signInWithEmailAndPassword(email, password);
-    
+
+    User? result =
+        await _authService.signInWithEmailAndPassword(email, password);
+
     if (result == null) {
       _isLoading = false;
       notifyListeners();
@@ -48,9 +50,13 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> register(String email, String password, String name) async {
     _isLoading = true;
     notifyListeners();
-    
-    User? result = await _authService.registerWithEmailAndPassword(email, password, name);
-    
+
+    User? result = await _authService.registerWithEmailAndPassword(
+      email,
+      password,
+      name,
+    );
+
     if (result == null) {
       _isLoading = false;
       notifyListeners();
@@ -64,15 +70,15 @@ class AuthProvider extends ChangeNotifier {
       return null;
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {
-        return 'No user found with this email address.';
+        return AppStrings.userNotFoundError;
       } else if (e.code == 'invalid-email') {
-        return 'Invalid email address format.';
+        return AppStrings.invalidEmailError;
       } else if (e.code == 'too-many-requests') {
-        return 'Too many requests. Please try again later.';
+        return AppStrings.tooManyRequestsError;
       }
-      return e.message ?? 'Failed to send password reset email.';
+      return e.message ?? AppStrings.resetPasswordGenericError;
     } catch (e) {
-      return 'Failed to send password reset email.';
+      return AppStrings.resetPasswordGenericError;
     }
   }
 

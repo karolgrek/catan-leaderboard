@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_colors.dart';
+import '../../constants/app_strings.dart';
 import '../../models/session_model.dart';
 import '../../providers/group_provider.dart';
 import '../screens/round_editor_screen.dart';
@@ -22,10 +24,10 @@ class ActiveRoundCard extends StatelessWidget {
     return Card(
       color: Colors.green.shade50,
       elevation: 4,
-      shadowColor: Colors.green.withOpacity(0.4),
+      shadowColor: AppColors.activeGreen.withValues(alpha: 0.4),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: const BorderSide(color: Colors.green, width: 2),
+        side: const BorderSide(color: AppColors.activeGreen, width: 2),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -37,13 +39,24 @@ class ActiveRoundCard extends StatelessWidget {
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.play_circle_fill, color: Colors.green, size: 28),
+                    Icon(
+                      Icons.play_circle_fill,
+                      color: AppColors.activeGreen,
+                      size: 28,
+                    ),
                     SizedBox(width: 12),
-                    Text('Active Round', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green)),
+                    Text(
+                      AppStrings.activeRoundTitle,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.activeGreen,
+                      ),
+                    ),
                   ],
                 ),
                 IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.green),
+                  icon: const Icon(Icons.edit, color: AppColors.activeGreen),
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -61,7 +74,10 @@ class ActiveRoundCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            const Text('Who collected 10 victory points first?', style: TextStyle(fontSize: 16)),
+            const Text(
+              AppStrings.activeRoundPrompt,
+              style: TextStyle(fontSize: 16),
+            ),
             const SizedBox(height: 16),
             ...activeRound.players.map((uid) {
               final player = members.firstWhere((m) => m.uid == uid);
@@ -84,7 +100,10 @@ class ActiveRoundCard extends StatelessWidget {
                     );
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
@@ -93,7 +112,13 @@ class ActiveRoundCard extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(player.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        Text(
+                          player.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
                         const Icon(Icons.emoji_events, color: Colors.amber),
                       ],
                     ),

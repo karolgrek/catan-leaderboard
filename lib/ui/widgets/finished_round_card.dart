@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_colors.dart';
+import '../../constants/app_constants.dart';
+import '../../constants/app_strings.dart';
 import '../../models/session_model.dart';
 import '../../providers/group_provider.dart';
 import '../screens/round_editor_screen.dart';
-import '../theme/app_theme.dart';
 import 'round_photo_picker.dart';
 
 class FinishedRoundCard extends StatelessWidget {
@@ -54,14 +56,14 @@ class FinishedRoundCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppConstants.cardBorderRadius),
         side: const BorderSide(color: AppColors.cardBorder),
       ),
       elevation: 0,
       color: AppColors.cardSurface,
       child: InkWell(
         onTap: () => _openEditor(context),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppConstants.cardBorderRadius),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Row(
@@ -94,7 +96,7 @@ class FinishedRoundCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Winner: ${winner.name}',
+                      AppStrings.winnerPrefix(winner.name),
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -103,7 +105,7 @@ class FinishedRoundCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Players: $playerNames',
+                      AppStrings.playersPrefix(playerNames),
                       style: const TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 13,
@@ -116,7 +118,8 @@ class FinishedRoundCard extends StatelessWidget {
                               .where((e) => e != 'Základ' && e != 'Base Game')
                               .map(normalizeExpansionName),
                         );
-                        if (round.players.length > 4 &&
+                        if (round.players.length >
+                                AppConstants.maxStandardPlayers &&
                             !displayExpansions.contains(
                               kFiveSixPlayerExtension,
                             )) {
@@ -128,7 +131,9 @@ class FinishedRoundCard extends StatelessWidget {
                         return Padding(
                           padding: const EdgeInsets.only(top: 4.0),
                           child: Text(
-                            'Expansions: ${displayExpansions.join(', ')}',
+                            AppStrings.expansionsPrefix(
+                              displayExpansions.join(', '),
+                            ),
                             style: const TextStyle(
                               fontStyle: FontStyle.italic,
                               fontSize: 12,
@@ -142,7 +147,7 @@ class FinishedRoundCard extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.only(top: 4.0),
                         child: Text(
-                          'Notes: ${round.notes}',
+                          AppStrings.notesPrefix(round.notes),
                           style: const TextStyle(
                             fontStyle: FontStyle.italic,
                             fontSize: 13,
@@ -160,19 +165,19 @@ class FinishedRoundCard extends StatelessWidget {
                             if (round.winnerPhotoUrl != null)
                               RoundPhotoThumbnail(
                                 url: round.winnerPhotoUrl!,
-                                label: 'Winner',
+                                label: AppStrings.winnerThumbLabel,
                                 icon: Icons.person,
                               ),
                             if (round.boardPhotoUrl != null)
                               RoundPhotoThumbnail(
                                 url: round.boardPhotoUrl!,
-                                label: 'Board',
+                                label: AppStrings.boardThumbLabel,
                                 icon: Icons.grid_on,
                               ),
                             if (round.partyPhotoUrl != null)
                               RoundPhotoThumbnail(
                                 url: round.partyPhotoUrl!,
-                                label: 'Party',
+                                label: AppStrings.partyThumbLabel,
                                 icon: Icons.groups,
                               ),
                           ],

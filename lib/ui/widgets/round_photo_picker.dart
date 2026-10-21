@@ -1,7 +1,9 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import '../../constants/app_colors.dart';
+import '../../constants/app_constants.dart';
+import '../../constants/app_strings.dart';
 import '../dialogs/photo_viewer_dialog.dart';
-import '../theme/app_theme.dart';
 
 class RoundPhotoPickerCard extends StatelessWidget {
   final String label;
@@ -38,7 +40,7 @@ class RoundPhotoPickerCard extends StatelessWidget {
         height: 130,
         decoration: BoxDecoration(
           color: AppColors.cardSurface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppConstants.cardBorderRadius),
           border: Border.all(color: AppColors.cardBorder),
           image: hasImage
               ? DecorationImage(
@@ -63,7 +65,7 @@ class RoundPhotoPickerCard extends StatelessWidget {
                     ),
                   ),
                   const Text(
-                    'Tap to add photo',
+                    AppStrings.tapToAddPhoto,
                     style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 12,
@@ -88,7 +90,7 @@ class RoundPhotoPickerCard extends StatelessWidget {
                             color: Colors.white,
                           ),
                           padding: EdgeInsets.zero,
-                          tooltip: 'View full photo',
+                          tooltip: AppStrings.viewFullPhotoTooltip,
                           onPressed: () => showFullPhotoDialog(
                             context,
                             bytes: bytes,
@@ -107,7 +109,7 @@ class RoundPhotoPickerCard extends StatelessWidget {
                             color: Colors.white,
                           ),
                           padding: EdgeInsets.zero,
-                          tooltip: 'Change photo',
+                          tooltip: AppStrings.changePhotoTooltip,
                           onPressed: onPick,
                         ),
                       ),
@@ -122,7 +124,7 @@ class RoundPhotoPickerCard extends StatelessWidget {
                             color: Colors.white,
                           ),
                           padding: EdgeInsets.zero,
-                          tooltip: 'Remove',
+                          tooltip: AppStrings.remove,
                           onPressed: onRemove,
                         ),
                       ),

@@ -2,6 +2,9 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import '../../constants/app_colors.dart';
+import '../../constants/app_constants.dart';
+import '../../constants/app_strings.dart';
 import '../../models/session_model.dart';
 import '../../providers/group_provider.dart';
 import '../../services/storage_service.dart';
@@ -59,7 +62,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
         .where((e) => e != 'Základ' && e != 'Base Game')
         .map(normalizeExpansionName)
         .toList();
-    if (_selectedPlayers.length > 4 &&
+    if (_selectedPlayers.length > AppConstants.maxStandardPlayers &&
         !_selectedExpansions.contains(kFiveSixPlayerExtension)) {
       _selectedExpansions.add(kFiveSixPlayerExtension);
     }
@@ -92,7 +95,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
             children: [
               ListTile(
                 leading: const Icon(Icons.camera_alt),
-                title: const Text('Take a photo'),
+                title: const Text(AppStrings.takePhotoOption),
                 onTap: () async {
                   Navigator.pop(context);
                   final file = await _storageService.takePhoto();
@@ -101,7 +104,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library),
-                title: const Text('Choose from gallery'),
+                title: const Text(AppStrings.chooseFromGalleryOption),
                 onTap: () async {
                   Navigator.pop(context);
                   final file = await _storageService.pickImage();
@@ -161,13 +164,16 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
 
   Future<void> _saveRound() async {
     if (_selectedPlayers.isEmpty) {
-      SnackbarHelper.showError(context, 'Select at least 1 player');
+      SnackbarHelper.showError(
+        context,
+        AppStrings.selectAtLeastOnePlayerError,
+      );
       return;
     }
 
     if ((widget.isFinishing || !widget.round.isActive) &&
         _selectedWinnerUid == null) {
-      SnackbarHelper.showError(context, 'Please select a winner');
+      SnackbarHelper.showError(context, AppStrings.selectWinnerError);
       return;
     }
 
@@ -212,7 +218,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
         );
       }
 
-      if (_selectedPlayers.length > 4 &&
+      if (_selectedPlayers.length > AppConstants.maxStandardPlayers &&
           !_selectedExpansions.contains(kFiveSixPlayerExtension)) {
         _selectedExpansions.add(kFiveSixPlayerExtension);
       }
@@ -238,14 +244,16 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
         Navigator.pop(context);
         SnackbarHelper.showSuccess(
           context,
-          widget.isFinishing ? 'Round finished successfully!' : 'Round updated!',
+          widget.isFinishing
+              ? AppStrings.roundFinishedSuccess
+              : AppStrings.roundUpdatedSuccess,
         );
       } else if (mounted) {
-        SnackbarHelper.showError(context, 'Failed to save round.');
+        SnackbarHelper.showError(context, AppStrings.saveRoundFailedError);
       }
     } catch (e) {
       if (mounted) {
-        SnackbarHelper.showError(context, 'Error saving/uploading: $e');
+        SnackbarHelper.showError(context, AppStrings.saveUploadError(e));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -256,7 +264,11 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isFinishing ? 'Finish Round' : 'Edit Round'),
+        title: Text(
+          widget.isFinishing
+              ? AppStrings.finishRoundTitle
+              : AppStrings.editRoundTitle,
+        ),
       ),
       body: _isLoading
           ? const Center(
@@ -265,7 +277,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
                 children: [
                   CircularProgressIndicator(),
                   SizedBox(height: 16),
-                  Text('Saving...'),
+                  Text(AppStrings.saving),
                 ],
               ),
             )
@@ -276,7 +288,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
                 children: [
                   if (!widget.isFinishing) ...[
                     const Text(
-                      'Players',
+                      AppStrings.playersLabel,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -285,9 +297,11 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
                     const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey.shade300),
+                        color: AppColors.cardSurface,
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.cardBorderRadius,
+                        ),
+                        border: Border.all(color: AppColors.cardBorder),
                       ),
                       child: Column(
                         children: widget.members.map((player) {
@@ -299,7 +313,9 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
                             dense: true,
                             activeColor: Theme.of(context).colorScheme.primary,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(
+                                AppConstants.buttonBorderRadius,
+                              ),
                             ),
                             onChanged: (val) {
                               setState(() {
@@ -312,7 +328,8 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
                                   }
                                 }
 
-                                if (_selectedPlayers.length > 4) {
+                                if (_selectedPlayers.length >
+                                    AppConstants.maxStandardPlayers) {
                                   if (!_selectedExpansions.contains(
                                     kFiveSixPlayerExtension,
                                   )) {
@@ -334,7 +351,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
 
                   if (widget.isFinishing || !widget.round.isActive) ...[
                     const Text(
-                      'Select Winner',
+                      AppStrings.selectWinnerLabel,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -343,34 +360,38 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
                     const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey.shade300),
+                        color: AppColors.cardSurface,
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.cardBorderRadius,
+                        ),
+                        border: Border.all(color: AppColors.cardBorder),
                       ),
-                      child: Column(
-                        children: widget.members
-                            .where((m) => _selectedPlayers.contains(m.uid))
-                            .map((member) {
-                          final isSelected = _selectedWinnerUid == member.uid;
-                          return RadioListTile<String>(
-                            title: Text(
-                              member.name,
-                              style: TextStyle(
-                                fontWeight: isSelected
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
+                      child: RadioGroup<String>(
+                        groupValue: _selectedWinnerUid,
+                        onChanged: (val) {
+                          if (val != null) {
+                            setState(() => _selectedWinnerUid = val);
+                          }
+                        },
+                        child: Column(
+                          children: widget.members
+                              .where((m) => _selectedPlayers.contains(m.uid))
+                              .map((member) {
+                            final isSelected = _selectedWinnerUid == member.uid;
+                            return RadioListTile<String>(
+                              title: Text(
+                                member.name,
+                                style: TextStyle(
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                ),
                               ),
-                            ),
-                            value: member.uid,
-                            groupValue: _selectedWinnerUid,
-                            activeColor: Theme.of(context).colorScheme.primary,
-                            onChanged: (val) {
-                              if (val != null) {
-                                setState(() => _selectedWinnerUid = val);
-                              }
-                            },
-                          );
-                        }).toList(),
+                              value: member.uid,
+                              activeColor: Theme.of(context).colorScheme.primary,
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -378,7 +399,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
 
                   if (!widget.isFinishing) ...[
                     const Text(
-                      'Expansions',
+                      AppStrings.expansionsLabel,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -387,9 +408,11 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
                     const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.grey.shade300),
+                        color: AppColors.cardSurface,
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.cardBorderRadius,
+                        ),
+                        border: Border.all(color: AppColors.cardBorder),
                       ),
                       child: Column(
                         children: expansionsList.map((exp) {
@@ -400,7 +423,9 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
                             dense: true,
                             activeColor: Theme.of(context).colorScheme.primary,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(
+                                AppConstants.buttonBorderRadius,
+                              ),
                             ),
                             onChanged: (val) {
                               setState(() {
@@ -418,7 +443,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
                     const SizedBox(height: 24),
 
                     const Text(
-                      'Notes (Optional)',
+                      AppStrings.notesOptionalLabel,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -428,9 +453,11 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
                     TextField(
                       controller: _notesController,
                       decoration: InputDecoration(
-                        hintText: 'Round notes...',
+                        hintText: AppStrings.roundNotesHint,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(
+                            AppConstants.buttonBorderRadius,
+                          ),
                         ),
                       ),
                       maxLines: 2,
@@ -439,18 +466,21 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
                   ],
 
                   const Text(
-                    'Photos (Optional)',
+                    AppStrings.photosOptionalLabel,
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    'Add memories and photos from this round!',
-                    style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+                  const Text(
+                    AppStrings.photosSubtitle,
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                    ),
                   ),
                   const SizedBox(height: 16),
 
                   RoundPhotoPickerCard(
-                    label: 'Winner Photo',
+                    label: AppStrings.winnerPhotoLabel,
                     bytes: _winnerPhotoBytes,
                     existingUrl: _existingWinnerPhotoUrl,
                     icon: Icons.person,
@@ -459,7 +489,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
                   ),
                   const SizedBox(height: 16),
                   RoundPhotoPickerCard(
-                    label: 'Board Photo',
+                    label: AppStrings.boardPhotoLabel,
                     bytes: _boardPhotoBytes,
                     existingUrl: _existingBoardPhotoUrl,
                     icon: Icons.grid_on,
@@ -468,7 +498,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
                   ),
                   const SizedBox(height: 16),
                   RoundPhotoPickerCard(
-                    label: 'Group Photo',
+                    label: AppStrings.groupPhotoLabel,
                     bytes: _partyPhotoBytes,
                     existingUrl: _existingPartyPhotoUrl,
                     icon: Icons.groups,
@@ -484,7 +514,9 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
                     child: ElevatedButton(
                       onPressed: _saveRound,
                       child: Text(
-                        widget.isFinishing ? 'Finish Round' : 'Save Changes',
+                        widget.isFinishing
+                            ? AppStrings.finishRoundTitle
+                            : AppStrings.saveChangesButton,
                         style: const TextStyle(fontSize: 18),
                       ),
                     ),

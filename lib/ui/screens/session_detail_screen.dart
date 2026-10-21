@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../constants/app_colors.dart';
+import '../../constants/app_strings.dart';
 import '../../providers/group_provider.dart';
 import '../../models/session_model.dart';
 import '../../utils/snackbar_helper.dart';
@@ -18,12 +20,15 @@ class SessionDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<GroupProvider>(
       builder: (context, groupProvider, child) {
-        final currentSession = groupProvider.sessions.firstWhere((s) => s.id == session.id, orElse: () => session);
+        final currentSession = groupProvider.sessions.firstWhere(
+          (s) => s.id == session.id,
+          orElse: () => session,
+        );
         final members = groupProvider.groupMembers;
 
         RoundModel? activeRound;
         List<RoundModel> finishedRounds = [];
-        
+
         for (var r in currentSession.rounds) {
           if (r.isActive) {
             activeRound = r;
@@ -34,16 +39,21 @@ class SessionDetailScreen extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text('Session: ${DateFormatter.toReadableDate(currentSession.date)}'),
+            title: Text(
+              AppStrings.sessionTitleWithDate(
+                DateFormatter.toReadableDate(currentSession.date),
+              ),
+            ),
             actions: [
               IconButton(
                 icon: const Icon(Icons.edit),
-                tooltip: 'Edit Session Data',
+                tooltip: AppStrings.editSessionDataTooltip,
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => SessionEditorScreen(session: currentSession),
+                      builder: (_) =>
+                          SessionEditorScreen(session: currentSession),
                     ),
                   );
                 },
@@ -52,15 +62,26 @@ class SessionDetailScreen extends StatelessWidget {
                 TextButton(
                   onPressed: () async {
                     if (activeRound != null) {
-                      SnackbarHelper.showError(context, 'Finish the active round first!');
+                      SnackbarHelper.showError(
+                        context,
+                        AppStrings.finishActiveRoundFirstError,
+                      );
                       return;
                     }
-                    bool success = await groupProvider.finishSession(currentSession.id);
-                    if (success) SnackbarHelper.showSuccess(context, 'Session finished!');
+                    bool success = await groupProvider.finishSession(
+                      currentSession.id,
+                    );
+                    if (!context.mounted) return;
+                    if (success) {
+                      SnackbarHelper.showSuccess(
+                        context,
+                        AppStrings.sessionFinishedSuccess,
+                      );
+                    }
                   },
                   style: TextButton.styleFrom(foregroundColor: Colors.white),
-                  child: const Text('Finish Session'),
-                )
+                  child: const Text(AppStrings.finishSessionButton),
+                ),
             ],
           ),
           body: SingleChildScrollView(
@@ -80,13 +101,24 @@ class SessionDetailScreen extends StatelessWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.notes, color: Theme.of(context).colorScheme.secondary),
+                        Icon(
+                          Icons.notes,
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
                         const SizedBox(width: 12),
-                        Expanded(child: Text(currentSession.notes, style: const TextStyle(fontStyle: FontStyle.italic, fontSize: 16))),
+                        Expanded(
+                          child: Text(
+                            currentSession.notes,
+                            style: const TextStyle(
+                              fontStyle: FontStyle.italic,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                
+
                 const SizedBox(height: 24),
 
                 if (activeRound != null)
@@ -102,9 +134,17 @@ class SessionDetailScreen extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       icon: const Icon(Icons.add),
-                      label: const Text('Start New Round', style: TextStyle(fontSize: 18)),
+                      label: const Text(
+                        AppStrings.startNewRoundButton,
+                        style: TextStyle(fontSize: 18),
+                      ),
                       onPressed: () {
-                        showStartRoundDialog(context, groupProvider, currentSession.id, members);
+                        showStartRoundDialog(
+                          context,
+                          groupProvider,
+                          currentSession.id,
+                          members,
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.all(20),
@@ -115,29 +155,45 @@ class SessionDetailScreen extends StatelessWidget {
                   ),
 
                 const SizedBox(height: 32),
-                
-                Row(
+
+                const Row(
                   children: [
-                    Icon(Icons.history, color: Colors.grey.shade700),
-                    const SizedBox(width: 8),
-                    const Text('Round History', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    Icon(Icons.history, color: AppColors.textSecondary),
+                    SizedBox(width: 8),
+                    Text(
+                      AppStrings.roundHistoryTitle,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
-                
+
                 if (finishedRounds.isEmpty)
-                  Center(
+                  const Center(
                     child: Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Text('No rounds finished yet.', style: TextStyle(color: Colors.grey.shade500, fontSize: 16)),
+                      padding: EdgeInsets.all(32.0),
+                      child: Text(
+                        AppStrings.noRoundsFinishedYet,
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 16,
+                        ),
+                      ),
                     ),
                   )
                 else
                   ...finishedRounds.asMap().entries.map((entry) {
                     int index = entry.key;
                     RoundModel round = entry.value;
-                    final winner = members.firstWhere((m) => m.uid == round.winnerUid, orElse: () => members.first);
-                    
+                    final winner = members.firstWhere(
+                      (m) => m.uid == round.winnerUid,
+                      orElse: () => members.first,
+                    );
+
                     return FinishedRoundCard(
                       index: index,
                       round: round,

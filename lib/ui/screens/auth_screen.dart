@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../constants/app_colors.dart';
+import '../../constants/app_strings.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/snackbar_helper.dart';
 
@@ -14,7 +16,7 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _isLogin = true;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _nameController = TextEditingController(); // Only for registration
+  final _nameController = TextEditingController();
 
   @override
   void dispose() {
@@ -30,20 +32,20 @@ class _AuthScreenState extends State<AuthScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Forgot Password'),
+        title: const Text(AppStrings.forgotPasswordTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Enter your email address and we will send you a link to set a new password.',
+              AppStrings.forgotPasswordDescription,
               style: TextStyle(fontSize: 14),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: resetEmailController,
               decoration: const InputDecoration(
-                labelText: 'Email',
+                labelText: AppStrings.emailLabel,
                 prefixIcon: Icon(Icons.email),
               ),
               keyboardType: TextInputType.emailAddress,
@@ -54,13 +56,13 @@ class _AuthScreenState extends State<AuthScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: const Text(AppStrings.cancel),
           ),
           ElevatedButton(
             onPressed: () async {
               final email = resetEmailController.text.trim();
               if (email.isEmpty) {
-                SnackbarHelper.showError(ctx, 'Please enter your email address.');
+                SnackbarHelper.showError(ctx, AppStrings.emptyEmailError);
                 return;
               }
               Navigator.pop(ctx);
@@ -71,13 +73,13 @@ class _AuthScreenState extends State<AuthScreen> {
               if (error == null) {
                 SnackbarHelper.showSuccess(
                   context,
-                  'Password reset link has been sent to your email.',
+                  AppStrings.resetEmailSentSuccess,
                 );
               } else {
                 SnackbarHelper.showError(context, error);
               }
             },
-            child: const Text('Send Reset Link'),
+            child: const Text(AppStrings.sendResetLinkButton),
           ),
         ],
       ),
@@ -102,10 +104,7 @@ class _AuthScreenState extends State<AuthScreen> {
     }
 
     if (!success && mounted) {
-      SnackbarHelper.showError(
-        context,
-        'Authentication failed. Please check your credentials.',
-      );
+      SnackbarHelper.showError(context, AppStrings.authFailedError);
     }
   }
 
@@ -114,19 +113,26 @@ class _AuthScreenState extends State<AuthScreen> {
     final isLoading = Provider.of<AuthProvider>(context).isLoading;
 
     return Scaffold(
-      appBar: AppBar(title: Text(_isLogin ? 'Login' : 'Register')),
+      appBar: AppBar(
+        title: Text(
+          _isLogin ? AppStrings.loginTitle : AppStrings.registerTitle,
+        ),
+      ),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(32.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Hero Icon
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  color: AppColors.chitBackground,
                   shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.primaryBrick,
+                    width: 2.5,
+                  ),
                 ),
                 child: Icon(
                   Icons.hexagon_outlined,
@@ -136,18 +142,18 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
               const SizedBox(height: 24),
               Text(
-                'Catan Leaderboard',
+                AppStrings.appTitle,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: AppColors.textPrimary,
                     ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
-                'Track your settlements & victory points',
+                AppStrings.appTagline,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade600,
+                      color: AppColors.textSecondary,
                     ),
                 textAlign: TextAlign.center,
               ),
@@ -156,7 +162,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 TextField(
                   controller: _nameController,
                   decoration: const InputDecoration(
-                    labelText: 'Name',
+                    labelText: AppStrings.nameLabel,
                     prefixIcon: Icon(Icons.person),
                   ),
                 ),
@@ -164,7 +170,7 @@ class _AuthScreenState extends State<AuthScreen> {
               TextField(
                 controller: _emailController,
                 decoration: const InputDecoration(
-                  labelText: 'Email',
+                  labelText: AppStrings.emailLabel,
                   prefixIcon: Icon(Icons.email),
                 ),
                 keyboardType: TextInputType.emailAddress,
@@ -173,7 +179,7 @@ class _AuthScreenState extends State<AuthScreen> {
               TextField(
                 controller: _passwordController,
                 decoration: const InputDecoration(
-                  labelText: 'Password',
+                  labelText: AppStrings.passwordLabel,
                   prefixIcon: Icon(Icons.lock),
                 ),
                 obscureText: true,
@@ -192,7 +198,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     child: const Text(
-                      'Forgot password?',
+                      AppStrings.forgotPasswordButton,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -208,7 +214,9 @@ class _AuthScreenState extends State<AuthScreen> {
                     : ElevatedButton(
                         onPressed: _submit,
                         child: Text(
-                          _isLogin ? 'Login' : 'Register',
+                          _isLogin
+                              ? AppStrings.loginTitle
+                              : AppStrings.registerTitle,
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -224,7 +232,9 @@ class _AuthScreenState extends State<AuthScreen> {
                   });
                 },
                 child: Text(
-                  _isLogin ? 'Create an account' : 'I already have an account',
+                  _isLogin
+                      ? AppStrings.createAccountToggle
+                      : AppStrings.alreadyHaveAccountToggle,
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),

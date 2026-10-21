@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_colors.dart';
+import '../../constants/app_constants.dart';
+import '../../constants/app_strings.dart';
 
 class LeaderboardSection extends StatelessWidget {
   final List<Map<String, dynamic>> leaderboard;
@@ -6,10 +9,10 @@ class LeaderboardSection extends StatelessWidget {
   const LeaderboardSection({super.key, required this.leaderboard});
 
   String _dotsForRank(int index) {
-    if (index == 0) return '•••••';
-    if (index == 1) return '••••';
-    if (index == 2) return '•••';
-    return '••';
+    if (index == 0) return AppConstants.rankDotsFirst;
+    if (index == 1) return AppConstants.rankDotsSecond;
+    if (index == 2) return AppConstants.rankDotsThird;
+    return AppConstants.rankDotsDefault;
   }
 
   @override
@@ -24,10 +27,10 @@ class LeaderboardSection extends StatelessWidget {
               const Icon(Icons.emoji_events, color: Colors.amber),
               const SizedBox(width: 8),
               Text(
-                'Leaderboard',
+                AppStrings.leaderboardTitle,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF2B1D16),
+                      color: AppColors.textPrimary,
                     ),
               ),
             ],
@@ -35,7 +38,7 @@ class LeaderboardSection extends StatelessWidget {
         ),
         Expanded(
           child: leaderboard.isEmpty
-              ? const Center(child: Text('No members found.'))
+              ? const Center(child: Text(AppStrings.noMembersFound))
               : ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: leaderboard.length,
@@ -53,33 +56,36 @@ class LeaderboardSection extends StatelessWidget {
 
                     final Color rankColor;
                     if (index == 0) {
-                      rankColor = const Color(0xFFFFD700); // Gold
+                      rankColor = AppColors.rankGold;
                     } else if (index == 1) {
-                      rankColor = const Color(0xFFC0C0C0); // Silver
+                      rankColor = AppColors.rankSilver;
                     } else if (index == 2) {
-                      rankColor = const Color(0xFFCD7F32); // Bronze
+                      rankColor = AppColors.rankBronze;
                     } else {
                       rankColor = Colors.grey.shade300;
                     }
 
-                    final Color textColor = index < 3
-                        ? const Color(0xFF2B1D16)
-                        : Colors.grey.shade700;
+                    final Color textColor =
+                        index < AppConstants.topMedalsCount
+                            ? AppColors.textPrimary
+                            : Colors.grey.shade700;
 
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8),
                       color: index == 0
-                          ? const Color(0xF5FFFDF0)
-                          : const Color(0xEBFFFDF9),
+                          ? AppColors.leaderCardSurface
+                          : AppColors.cardSurface,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.cardBorderRadius,
+                        ),
                         side: index == 0
                             ? BorderSide(
                                 color: rankColor.withValues(alpha: 0.7),
                                 width: 2,
                               )
                             : const BorderSide(
-                                color: Color(0xFFE2CCB0),
+                                color: AppColors.cardBorder,
                                 width: 1,
                               ),
                       ),
@@ -129,7 +135,7 @@ class LeaderboardSection extends StatelessWidget {
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
-                            color: Color(0xFF2B1D16),
+                            color: AppColors.textPrimary,
                           ),
                         ),
                         subtitle: Padding(
@@ -138,19 +144,19 @@ class LeaderboardSection extends StatelessWidget {
                             children: [
                               Expanded(
                                 child: Text(
-                                  'Games: $sessionsCount',
+                                  AppStrings.gamesCount(sessionsCount),
                                   style: const TextStyle(
                                     fontSize: 13,
-                                    color: Color(0xFF6D5446),
+                                    color: AppColors.textSecondary,
                                   ),
                                 ),
                               ),
                               Expanded(
                                 child: Text(
-                                  'Wins: $winsCount',
+                                  AppStrings.winsCount(winsCount),
                                   style: const TextStyle(
                                     fontSize: 13,
-                                    color: Color(0xFF6D5446),
+                                    color: AppColors.textSecondary,
                                   ),
                                 ),
                               ),
@@ -165,15 +171,15 @@ class LeaderboardSection extends StatelessWidget {
                               winrateStr,
                               style: const TextStyle(
                                 fontSize: 18,
-                                color: Color(0xFFC63B12),
+                                color: AppColors.primaryBrick,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             const Text(
-                              'Winrate',
+                              AppStrings.winrateLabel,
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Color(0xFF6D5446),
+                                color: AppColors.textSecondary,
                               ),
                             ),
                           ],

@@ -1,94 +1,130 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_strings.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/group_provider.dart';
 import '../../utils/snackbar_helper.dart';
 
-void showJoinModal(BuildContext context, GroupProvider groupProvider, AuthProvider authProvider) {
+void showJoinModal(
+  BuildContext context,
+  GroupProvider groupProvider,
+  AuthProvider authProvider,
+) {
   final TextEditingController joinGroupIdController = TextEditingController();
-  
+
   showDialog(
     context: context,
-    builder: (context) {
+    builder: (dialogContext) {
       return AlertDialog(
-        title: const Text('Join Group'),
+        title: const Text(AppStrings.joinGroupTitle),
         content: TextField(
           controller: joinGroupIdController,
           decoration: const InputDecoration(
-            labelText: 'Group ID',
+            labelText: AppStrings.groupIdLabel,
             border: OutlineInputBorder(),
-            hintText: 'Enter 20-character Group ID',
+            hintText: AppStrings.groupIdHint,
           ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text(AppStrings.cancel),
           ),
           ElevatedButton(
             onPressed: () async {
               final groupId = joinGroupIdController.text.trim();
               if (groupId.isEmpty) {
-                SnackbarHelper.showError(context, 'Please enter a Group ID.');
+                SnackbarHelper.showError(
+                  dialogContext,
+                  AppStrings.emptyGroupIdError,
+                );
                 return;
               }
-              
-              Navigator.pop(context); // close modal first
-              
-              bool joined = await groupProvider.joinGroup(groupId, authProvider.user!.uid);
+
+              Navigator.pop(dialogContext);
+
+              bool joined = await groupProvider.joinGroup(
+                groupId,
+                authProvider.user!.uid,
+              );
+              if (!context.mounted) return;
               if (joined) {
-                SnackbarHelper.showSuccess(context, 'Joined group! Select it from the list.');
+                SnackbarHelper.showSuccess(
+                  context,
+                  AppStrings.joinedGroupSuccess,
+                );
               } else {
-                SnackbarHelper.showError(context, 'Failed to join group.');
+                SnackbarHelper.showError(
+                  context,
+                  AppStrings.joinGroupFailedError,
+                );
               }
             },
-            child: const Text('Join'),
-          )
+            child: const Text(AppStrings.joinButton),
+          ),
         ],
       );
     },
   );
 }
 
-void showCreateModal(BuildContext context, GroupProvider groupProvider, AuthProvider authProvider) {
-  final TextEditingController createGroupNameController = TextEditingController();
-  
+void showCreateModal(
+  BuildContext context,
+  GroupProvider groupProvider,
+  AuthProvider authProvider,
+) {
+  final TextEditingController createGroupNameController =
+      TextEditingController();
+
   showDialog(
     context: context,
-    builder: (context) {
+    builder: (dialogContext) {
       return AlertDialog(
-        title: const Text('Create New Group'),
+        title: const Text(AppStrings.createGroupTitle),
         content: TextField(
           controller: createGroupNameController,
           decoration: const InputDecoration(
-            labelText: 'Group Name',
+            labelText: AppStrings.groupNameLabel,
             border: OutlineInputBorder(),
-            hintText: 'e.g. Weekend Boardgamers',
+            hintText: AppStrings.groupNameHint,
           ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text(AppStrings.cancel),
           ),
           ElevatedButton(
             onPressed: () async {
               final groupName = createGroupNameController.text.trim();
               if (groupName.isEmpty) {
-                SnackbarHelper.showError(context, 'Please enter a group name.');
+                SnackbarHelper.showError(
+                  dialogContext,
+                  AppStrings.emptyGroupNameError,
+                );
                 return;
               }
-              
-              Navigator.pop(context); // close modal first
-              
-              bool created = await groupProvider.createGroup(groupName, authProvider.user!.uid);
+
+              Navigator.pop(dialogContext);
+
+              bool created = await groupProvider.createGroup(
+                groupName,
+                authProvider.user!.uid,
+              );
+              if (!context.mounted) return;
               if (created) {
-                SnackbarHelper.showSuccess(context, 'Group created successfully!');
+                SnackbarHelper.showSuccess(
+                  context,
+                  AppStrings.createdGroupSuccess,
+                );
               } else {
-                SnackbarHelper.showError(context, 'Failed to create group.');
+                SnackbarHelper.showError(
+                  context,
+                  AppStrings.createGroupFailedError,
+                );
               }
             },
-            child: const Text('Create'),
-          )
+            child: const Text(AppStrings.createButton),
+          ),
         ],
       );
     },

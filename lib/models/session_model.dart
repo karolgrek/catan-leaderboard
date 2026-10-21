@@ -1,28 +1,24 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../constants/app_strings.dart';
 
-const String kFiveSixPlayerExtension = '5-6 Player Extension';
-
-const List<String> kCatanExpansions = [
-  kFiveSixPlayerExtension,
-  'Frenemies of Catan',
-  'Easter Bunny & Santa Claus',
-];
+const String kFiveSixPlayerExtension = AppStrings.fiveSixPlayerExtension;
+const List<String> kCatanExpansions = AppStrings.catanExpansions;
 
 String normalizeExpansionName(String expansion) {
   if (expansion == 'Doplnok pre 5 – 6 hráčov' ||
       expansion == 'Doplněk pro 5 – 6 hráčů' ||
       expansion == 'Doplnek pro 5-6') {
-    return kFiveSixPlayerExtension;
+    return AppStrings.fiveSixPlayerExtension;
   }
   if (expansion == 'Najlepší priatelia' ||
       expansion == 'Nejlepší přátelé' ||
       expansion == 'Rozšíření Nejlepší přátelé') {
-    return 'Frenemies of Catan';
+    return AppStrings.frenemiesExpansion;
   }
   if (expansion == 'Veľkonočný zajačik a Santa Claus' ||
       expansion == 'Velikonoční zajíček a Santa Claus' ||
       expansion == 'Sváteční rozšíření Velikonoční zajíček a Santa Claus') {
-    return 'Easter Bunny & Santa Claus';
+    return AppStrings.easterSantaExpansion;
   }
   return expansion;
 }

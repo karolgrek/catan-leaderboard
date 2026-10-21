@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import '../../constants/app_constants.dart';
+import '../../constants/app_strings.dart';
 
 void showFullPhotoDialog(
   BuildContext context, {
@@ -16,7 +18,7 @@ void showFullPhotoDialog(
         alignment: Alignment.topRight,
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppConstants.cardBorderRadius),
             child: InteractiveViewer(
               child: bytes != null
                   ? Image.memory(bytes, fit: BoxFit.contain)
@@ -42,7 +44,7 @@ void showFullPhotoDialog(
                         color: Colors.grey.shade900,
                         child: const Center(
                           child: Text(
-                            'Failed to load image',
+                            AppStrings.failedToLoadImage,
                             style: TextStyle(color: Colors.white),
                           ),
                         ),

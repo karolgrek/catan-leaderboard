@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../constants/app_colors.dart';
+import '../../constants/app_strings.dart';
 import '../../models/notification_model.dart';
 import '../../providers/group_provider.dart';
 import '../../utils/date_formatters.dart';
@@ -30,7 +32,7 @@ class _NotificationBellButtonState extends State<NotificationBellButton> {
                 ? Icons.notifications_paused
                 : Icons.notifications_outlined,
           ),
-          tooltip: 'Notifications',
+          tooltip: AppStrings.notificationsTooltip,
           onPressed: () async {
             await showNotificationsDialog(context);
             if (mounted) {
@@ -115,7 +117,7 @@ class _NotificationsDialogContentState
       case 'dethroned':
         return Colors.purple;
       case 'win_streak':
-        return Colors.redAccent;
+        return AppColors.errorRed;
       case 'first_win':
         return Colors.teal;
       case 'photos_uploaded':
@@ -141,11 +143,11 @@ class _NotificationsDialogContentState
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: const Row(
         children: [
-          Icon(Icons.notifications_active, color: Color(0xFFD84315)),
+          Icon(Icons.notifications_active, color: AppColors.primaryBrick),
           SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Catan Notifications',
+              AppStrings.notificationsDialogTitle,
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
@@ -165,7 +167,7 @@ class _NotificationsDialogContentState
               child: notifications.isEmpty
                   ? Center(
                       child: Text(
-                        'No notifications yet.\nStart a session or finish a round!',
+                        AppStrings.noNotificationsYet,
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.grey.shade600),
                       ),
@@ -237,7 +239,7 @@ class _NotificationsDialogContentState
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Close'),
+          child: const Text(AppStrings.close),
         ),
       ],
     );
@@ -261,7 +263,7 @@ class _NotificationsDialogContentState
             const SizedBox(width: 8),
             const Expanded(
               child: Text(
-                'Phone notification bar is active',
+                AppStrings.phoneNotificationBarActive,
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
               ),
             ),
@@ -274,7 +276,10 @@ class _NotificationsDialogContentState
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
-              child: const Text('Test', style: TextStyle(fontSize: 12)),
+              child: const Text(
+                AppStrings.testNotificationButton,
+                style: TextStyle(fontSize: 12),
+              ),
             ),
           ],
         ),
@@ -290,8 +295,8 @@ class _NotificationsDialogContentState
           border: Border.all(color: Colors.red.shade200),
         ),
         child: const Text(
-          'Notifications are blocked in browser settings. Allow notifications for this site to see them in your phone notification bar.',
-          style: TextStyle(fontSize: 12, color: Colors.redAccent),
+          AppStrings.notificationsBlockedMessage,
+          style: TextStyle(fontSize: 12, color: AppColors.errorRed),
         ),
       );
     }
@@ -307,7 +312,7 @@ class _NotificationsDialogContentState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
-            'Enable notifications to receive Catan alerts directly in your phone notification bar!',
+            AppStrings.enableNotificationsPrompt,
             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 8),
@@ -323,12 +328,12 @@ class _NotificationsDialogContentState
                 if (!context.mounted) return;
                 SnackbarHelper.showSuccess(
                   context,
-                  'Notifications enabled!',
+                  AppStrings.notificationsEnabledSuccess,
                 );
               }
             },
             icon: const Icon(Icons.notifications_active, size: 18),
-            label: const Text('Enable Phone Notifications'),
+            label: const Text(AppStrings.enablePhoneNotificationsButton),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
             ),

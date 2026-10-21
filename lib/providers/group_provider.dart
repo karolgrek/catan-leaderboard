@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../constants/app_constants.dart';
+import '../constants/app_strings.dart';
 import '../models/group_model.dart';
 import '../models/notification_model.dart';
 import '../models/session_model.dart';
@@ -64,12 +66,9 @@ class GroupProvider extends ChangeNotifier {
   }
 
   Future<void> sendTestNotification() async {
-    const title = 'Catan Leaderboard';
-    const body =
-        'Your scouts report that notifications are working! Prepare your settlements.';
     await WebNotificationBridge.showNotification(
-      title: title,
-      body: body,
+      title: AppStrings.appTitle,
+      body: AppStrings.testNotificationBody,
       tag: 'test-${DateTime.now().millisecondsSinceEpoch}',
     );
   }
@@ -302,7 +301,6 @@ class GroupProvider extends ChangeNotifier {
   }) async {
     final String winnerName = _getMemberName(winnerUid);
 
-    // Round Winner
     await _notificationService.notifyRoundWinner(
       groupId: groupId,
       groupName: groupName,
@@ -311,7 +309,6 @@ class GroupProvider extends ChangeNotifier {
       targetUids: allMemberUids,
     );
 
-    // Dethroned / Kingslayer
     final oldLeader = LeaderboardCalculator.getTopLeader(
       LeaderboardCalculator.calculateLeaderboard(
         members: _groupMembers,
@@ -340,14 +337,13 @@ class GroupProvider extends ChangeNotifier {
     final priorFinishedRounds =
         LeaderboardCalculator.getChronologicalFinishedRounds(sessionsBefore);
 
-    // Win Streak
     final int currentWinStreak =
         LeaderboardCalculator.countConsecutiveTrailingWins(
               priorFinishedRounds,
               winnerUid,
             ) +
             1;
-    if (currentWinStreak >= 2) {
+    if (currentWinStreak >= AppConstants.minWinStreakForAlert) {
       await _notificationService.notifyWinStreak(
         groupId: groupId,
         groupName: groupName,
@@ -357,7 +353,6 @@ class GroupProvider extends ChangeNotifier {
       );
     }
 
-    // Underdog / First Win
     final int priorTotalWins = priorFinishedRounds
         .where((r) => r.winnerUid == winnerUid)
         .length;
@@ -376,7 +371,7 @@ class GroupProvider extends ChangeNotifier {
         previousLosingStreak: priorLosingStreak,
         targetUids: allMemberUids,
       );
-    } else if (priorLosingStreak >= 5) {
+    } else if (priorLosingStreak >= AppConstants.underdogLossStreakThreshold) {
       await _notificationService.notifyUnderdogOrFirstWin(
         groupId: groupId,
         groupName: groupName,
@@ -392,7 +387,7 @@ class GroupProvider extends ChangeNotifier {
     for (final member in _groupMembers) {
       if (member.uid == uid) return member.name;
     }
-    return 'Unknown Settler';
+    return AppStrings.unknownSettler;
   }
 
   Future<bool> seedTestUsers() async {

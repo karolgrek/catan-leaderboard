@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_colors.dart';
+import '../../constants/app_constants.dart';
+import '../../constants/app_strings.dart';
 import '../../models/session_model.dart';
 import '../../utils/date_formatters.dart';
 import '../screens/session_detail_screen.dart';
@@ -18,7 +21,7 @@ class _SessionsSectionState extends State<SessionsSection> {
   @override
   Widget build(BuildContext context) {
     final sessions = widget.sessions;
-    const int maxInitialItems = 3;
+    const int maxInitialItems = AppConstants.initialDisplayedSessionsCount;
     final bool hasMore = sessions.length > maxInitialItems;
 
     final displayedSessions = _isExpanded || !hasMore
@@ -27,13 +30,13 @@ class _SessionsSectionState extends State<SessionsSection> {
 
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFFBF6ED).withValues(alpha: 0.94),
+        color: AppColors.drawerSurface.withValues(alpha: 0.94),
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(32),
-          topRight: Radius.circular(32),
+          topLeft: Radius.circular(AppConstants.drawerTopRadius),
+          topRight: Radius.circular(AppConstants.drawerTopRadius),
         ),
         border: const Border(
-          top: BorderSide(color: Color(0xFFDEC5A4), width: 1.5),
+          top: BorderSide(color: AppColors.drawerBorder, width: 1.5),
         ),
         boxShadow: [
           BoxShadow(
@@ -56,10 +59,10 @@ class _SessionsSectionState extends State<SessionsSection> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Sessions',
+                  AppStrings.sessionsTitle,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF2B1D16),
+                        color: AppColors.textPrimary,
                       ),
                 ),
               ],
@@ -67,7 +70,7 @@ class _SessionsSectionState extends State<SessionsSection> {
           ),
           Expanded(
             child: sessions.isEmpty
-                ? const Center(child: Text('No sessions recorded yet.'))
+                ? const Center(child: Text(AppStrings.noSessionsRecorded))
                 : ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: displayedSessions.length +
@@ -88,12 +91,14 @@ class _SessionsSectionState extends State<SessionsSection> {
                               });
                             },
                             icon: const Icon(Icons.expand_more),
-                            label: const Text('Show more'),
+                            label: const Text(AppStrings.showMoreButton),
                             style: TextButton.styleFrom(
-                              backgroundColor: const Color(0xFFF3E3C3),
-                              foregroundColor: const Color(0xFF2B1D16),
+                              backgroundColor: AppColors.chitBackground,
+                              foregroundColor: AppColors.textPrimary,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(
+                                  AppConstants.cardBorderRadius,
+                                ),
                               ),
                             ),
                           ),
@@ -105,14 +110,19 @@ class _SessionsSectionState extends State<SessionsSection> {
                         margin: const EdgeInsets.only(bottom: 8),
                         color: session.isActive
                             ? Colors.green.shade50
-                            : const Color(0xFFFFFDF9),
+                            : AppColors.surfaceWhite,
                         elevation: session.isActive ? 2 : 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(
+                            AppConstants.cardBorderRadius,
+                          ),
                           side: session.isActive
-                              ? const BorderSide(color: Colors.green, width: 1.2)
+                              ? const BorderSide(
+                                  color: AppColors.activeGreen,
+                                  width: 1.2,
+                                )
                               : const BorderSide(
-                                  color: Color(0xFFE2CCB0),
+                                  color: AppColors.cardBorder,
                                   width: 1,
                                 ),
                         ),
@@ -125,31 +135,35 @@ class _SessionsSectionState extends State<SessionsSection> {
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               color: session.isActive
-                                  ? Colors.green.withValues(alpha: 0.2)
-                                  : const Color(0xFFF3E3C3),
+                                  ? AppColors.activeGreen.withValues(alpha: 0.2)
+                                  : AppColors.chitBackground,
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               session.isActive ? Icons.play_arrow : Icons.check,
                               color: session.isActive
-                                  ? Colors.green
-                                  : const Color(0xFF6D5446),
+                                  ? AppColors.activeGreen
+                                  : AppColors.textSecondary,
                             ),
                           ),
                           title: Text(
                             DateFormatter.toReadableDate(session.date),
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF2B1D16),
+                              color: AppColors.textPrimary,
                             ),
                           ),
                           subtitle: Text(
-                            '${session.rounds.length} rounds recorded',
-                            style: const TextStyle(color: Color(0xFF6D5446)),
+                            AppStrings.roundsRecordedCount(
+                              session.rounds.length,
+                            ),
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                           trailing: const Icon(
                             Icons.chevron_right,
-                            color: Color(0xFF6D5446),
+                            color: AppColors.textSecondary,
                           ),
                           onTap: () {
                             Navigator.push(

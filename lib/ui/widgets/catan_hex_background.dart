@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../constants/app_colors.dart';
+import '../../constants/app_constants.dart';
 
 class CatanHexBackground extends StatelessWidget {
   final Widget child;
@@ -18,31 +20,22 @@ class CatanHexBackground extends StatelessWidget {
 class _CatanHexMosaicPainter extends CustomPainter {
   const _CatanHexMosaicPainter();
 
-  static const Color _baseColor = Color(0xFFF3EAD8);
-  static const double _colorAlpha = 0.20;
-
-  static const List<Color> _resourceColors = [
-    Color(0xFFE5B53B), // Wheat (Golden Amber)
-    Color(0xFF88B664), // Sheep (Pasture Green)
-    Color(0xFF7A8B99), // Ore (Mountain Slate)
-    Color(0xFFD16B47), // Brick (Terracotta Clay)
-    Color(0xFF4E7D52), // Wood (Forest Pine)
-  ];
-
   @override
   void paint(Canvas canvas, Size size) {
-    final Paint bgPaint = Paint()..color = _baseColor;
+    final Paint bgPaint = Paint()..color = AppColors.parchmentBase;
     canvas.drawRect(Offset.zero & size, bgPaint);
 
-    const double radius = 34.0;
+    const double radius = AppConstants.hexRadius;
     final double hexWidth = math.sqrt(3) * radius;
     const double vertDist = 1.5 * radius;
 
     final Paint fillPaint = Paint()..style = PaintingStyle.fill;
     final Paint strokePaint = Paint()
       ..style = PaintingStyle.stroke
-      ..color = const Color(0xFFC63B12).withValues(alpha: 0.16)
-      ..strokeWidth = 1.2;
+      ..color = AppColors.primaryBrick.withValues(
+        alpha: AppConstants.hexStrokeAlpha,
+      )
+      ..strokeWidth = AppConstants.hexStrokeWidth;
 
     int row = 0;
     for (double y = 0; y < size.height + radius * 2; y += vertDist) {
@@ -53,10 +46,11 @@ class _CatanHexMosaicPainter extends CustomPainter {
           x += hexWidth) {
         final Path hexPath = _createPointyHexPath(x, y, radius);
 
-        // Variant A: Full Mosaic of all 5 Catan resources
-        final int colorIndex = (row * 3 + col * 2) % _resourceColors.length;
-        fillPaint.color =
-            _resourceColors[colorIndex].withValues(alpha: _colorAlpha);
+        final int colorIndex =
+            (row * 3 + col * 2) % AppColors.resourcePalette.length;
+        fillPaint.color = AppColors.resourcePalette[colorIndex].withValues(
+          alpha: AppConstants.hexColorAlpha,
+        );
 
         canvas.drawPath(hexPath, fillPaint);
         canvas.drawPath(hexPath, strokePaint);

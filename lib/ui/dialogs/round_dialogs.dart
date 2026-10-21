@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../constants/app_constants.dart';
+import '../../constants/app_strings.dart';
 import '../../models/session_model.dart';
 import '../../providers/group_provider.dart';
 import '../../utils/snackbar_helper.dart';
@@ -28,7 +30,7 @@ void showStartRoundDialog(
               children: [
                 Icon(Icons.play_circle_fill, color: Colors.deepOrange),
                 SizedBox(width: 8),
-                Text('New Round'),
+                Text(AppStrings.newRoundDialogTitle),
               ],
             ),
             content: SingleChildScrollView(
@@ -36,7 +38,7 @@ void showStartRoundDialog(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Players',
+                    AppStrings.playersLabel,
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 8),
@@ -58,8 +60,8 @@ void showStartRoundDialog(
                             selectedForRound.remove(player.uid);
                           }
 
-                          // Auto-select or unselect 5-6 player extension
-                          if (selectedForRound.length > 4) {
+                          if (selectedForRound.length >
+                              AppConstants.maxStandardPlayers) {
                             if (!selectedExpansions.contains(
                               kFiveSixPlayerExtension,
                             )) {
@@ -77,7 +79,7 @@ void showStartRoundDialog(
                     child: Divider(),
                   ),
                   const Text(
-                    'Expansions',
+                    AppStrings.expansionsLabel,
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 8),
@@ -107,14 +109,14 @@ void showStartRoundDialog(
                     child: Divider(),
                   ),
                   const Text(
-                    'Notes (Optional)',
+                    AppStrings.notesOptionalLabel,
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: notesController,
                     decoration: const InputDecoration(
-                      hintText: 'Round notes...',
+                      hintText: AppStrings.roundNotesHint,
                       border: OutlineInputBorder(),
                     ),
                     maxLines: 2,
@@ -125,18 +127,19 @@ void showStartRoundDialog(
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: const Text(AppStrings.cancel),
               ),
               ElevatedButton(
                 onPressed: () async {
                   if (selectedForRound.isEmpty) {
                     SnackbarHelper.showError(
                       context,
-                      'Please select at least 1 player',
+                      AppStrings.selectAtLeastOnePlayerError,
                     );
                     return;
                   }
-                  if (selectedForRound.length > 4 &&
+                  if (selectedForRound.length >
+                          AppConstants.maxStandardPlayers &&
                       !selectedExpansions.contains(kFiveSixPlayerExtension)) {
                     selectedExpansions.add(kFiveSixPlayerExtension);
                   }
@@ -148,7 +151,7 @@ void showStartRoundDialog(
                     notesController.text.trim(),
                   );
                 },
-                child: const Text('Start Round'),
+                child: const Text(AppStrings.startRoundButton),
               ),
             ],
           );
