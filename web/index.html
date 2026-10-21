@@ -21,12 +21,26 @@
 </head>
 <body>
   <script>
+    // Clear legacy Flutter service worker caches so updates appear immediately
+    if ('caches' in window) {
+      caches.keys().then(function (names) {
+        for (let name of names) {
+          if (name.indexOf('flutter-app') !== -1 || name.indexOf('flutter-temp') !== -1) {
+            caches.delete(name);
+          }
+        }
+      });
+    }
+
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {
-        navigator.serviceWorker.getRegistration().then(function (reg) {
-          if (!reg) {
-            navigator.serviceWorker.register('catan-sw.js').catch(function () {});
+        navigator.serviceWorker.getRegistrations().then(function (registrations) {
+          for (let reg of registrations) {
+            if (reg.active && reg.active.scriptURL && reg.active.scriptURL.indexOf('flutter_service_worker.js') !== -1) {
+              reg.unregister();
+            }
           }
+          navigator.serviceWorker.register('catan-sw.js').catch(function () {});
         });
       });
     }
@@ -83,6 +97,6 @@
       }
     };
   </script>
-  <script src="flutter_bootstrap.js" async></script>
+  <script src="flutter_bootstrap.js?v=2" async></script>
 </body>
 </html>
