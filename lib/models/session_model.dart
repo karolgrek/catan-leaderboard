@@ -1,10 +1,27 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../constants/app_strings.dart';
 
-const List<String> kCatanExpansions = [
-  'Doplnok pre 5 – 6 hráčov',
-  'Najlepší priatelia',
-  'Veľkonočný zajačik a Santa Claus',
-];
+const String kFiveSixPlayerExtension = AppStrings.fiveSixPlayerExtension;
+const List<String> kCatanExpansions = AppStrings.catanExpansions;
+
+String normalizeExpansionName(String expansion) {
+  if (expansion == 'Doplnok pre 5 – 6 hráčov' ||
+      expansion == 'Doplněk pro 5 – 6 hráčů' ||
+      expansion == 'Doplnek pro 5-6') {
+    return AppStrings.fiveSixPlayerExtension;
+  }
+  if (expansion == 'Najlepší priatelia' ||
+      expansion == 'Nejlepší přátelé' ||
+      expansion == 'Rozšíření Nejlepší přátelé') {
+    return AppStrings.frenemiesExpansion;
+  }
+  if (expansion == 'Veľkonočný zajačik a Santa Claus' ||
+      expansion == 'Velikonoční zajíček a Santa Claus' ||
+      expansion == 'Sváteční rozšíření Velikonoční zajíček a Santa Claus') {
+    return AppStrings.easterSantaExpansion;
+  }
+  return expansion;
+}
 
 class RoundModel {
   final String id;
@@ -63,7 +80,7 @@ class SessionModel {
   final String groupId;
   final DateTime date;
   final String notes;
-  final List<String> selectedPlayers; // The players available for this session
+  final List<String> selectedPlayers;
   final bool isActive;
   final List<RoundModel> rounds;
 
@@ -80,7 +97,9 @@ class SessionModel {
   factory SessionModel.fromMap(Map<String, dynamic> data, String id) {
     List<RoundModel> parsedRounds = [];
     if (data['rounds'] != null) {
-      parsedRounds = (data['rounds'] as List).map((r) => RoundModel.fromMap(r as Map<String, dynamic>)).toList();
+      parsedRounds = (data['rounds'] as List)
+          .map((r) => RoundModel.fromMap(r as Map<String, dynamic>))
+          .toList();
     }
 
     return SessionModel(

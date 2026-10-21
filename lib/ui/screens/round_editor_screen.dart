@@ -2,10 +2,14 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import '../../constants/app_colors.dart';
+import '../../constants/app_constants.dart';
+import '../../constants/app_strings.dart';
 import '../../models/session_model.dart';
 import '../../providers/group_provider.dart';
 import '../../services/storage_service.dart';
 import '../../utils/snackbar_helper.dart';
+import '../widgets/round_photo_picker.dart';
 
 class RoundEditorScreen extends StatefulWidget {
   final String sessionId;
@@ -29,12 +33,12 @@ class RoundEditorScreen extends StatefulWidget {
 
 class _RoundEditorScreenState extends State<RoundEditorScreen> {
   final StorageService _storageService = StorageService();
-  
+
   late List<String> _selectedPlayers;
   late List<String> _selectedExpansions;
   late TextEditingController _notesController;
   String? _selectedWinnerUid;
-  
+
   bool _isLoading = false;
 
   XFile? _winnerPhoto;
@@ -47,7 +51,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
   String? _existingWinnerPhotoUrl;
   String? _existingBoardPhotoUrl;
   String? _existingPartyPhotoUrl;
-  
+
   final expansionsList = kCatanExpansions;
 
   @override
@@ -55,15 +59,15 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
     super.initState();
     _selectedPlayers = List<String>.from(widget.round.players);
     _selectedExpansions = widget.round.expansions
-        .where((e) => e != 'Základ')
-        .map((e) {
-      if (e == 'Doplněk pro 5 – 6 hráčů' || e == 'Doplnek pro 5-6') return 'Doplnok pre 5 – 6 hráčov';
-      if (e == 'Nejlepší přátelé' || e == 'Rozšíření Nejlepší přátelé') return 'Najlepší priatelia';
-      if (e == 'Velikonoční zajíček a Santa Claus' || e == 'Sváteční rozšíření Velikonoční zajíček a Santa Claus') return 'Veľkonočný zajačik a Santa Claus';
-      return e;
-    }).toList();
+        .where((e) => e != 'Základ' && e != 'Base Game')
+        .map(normalizeExpansionName)
+        .toList();
+    if (_selectedPlayers.length > AppConstants.maxStandardPlayers &&
+        !_selectedExpansions.contains(kFiveSixPlayerExtension)) {
+      _selectedExpansions.add(kFiveSixPlayerExtension);
+    }
     _notesController = TextEditingController(text: widget.round.notes);
-    
+
     if (widget.isFinishing) {
       _selectedWinnerUid = widget.preselectedWinnerUid;
     } else {
@@ -74,7 +78,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
     _existingBoardPhotoUrl = widget.round.boardPhotoUrl;
     _existingPartyPhotoUrl = widget.round.partyPhotoUrl;
   }
-  
+
   @override
   void dispose() {
     _notesController.dispose();
@@ -91,7 +95,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
             children: [
               ListTile(
                 leading: const Icon(Icons.camera_alt),
-                title: const Text('Odfotiť'),
+                title: const Text(AppStrings.takePhotoOption),
                 onTap: () async {
                   Navigator.pop(context);
                   final file = await _storageService.takePhoto();
@@ -100,7 +104,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library),
-                title: const Text('Vybrať z galérie'),
+                title: const Text(AppStrings.chooseFromGalleryOption),
                 onTap: () async {
                   Navigator.pop(context);
                   final file = await _storageService.pickImage();
@@ -110,7 +114,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
             ],
           ),
         );
-      }
+      },
     );
   }
 
@@ -123,7 +127,7 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
       if (type == 'winner') {
         _winnerPhoto = file;
         _winnerPhotoBytes = bytes;
-        if (file != null) _existingWinnerPhotoUrl = null; // overriding existing
+        if (file != null) _existingWinnerPhotoUrl = null;
       }
       if (type == 'board') {
         _boardPhoto = file;
@@ -137,8 +141,8 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
       }
     });
   }
-  
-  void _removeExistingImage(String type) {
+
+  void _removeImage(String type) {
     setState(() {
       if (type == 'winner') {
         _existingWinnerPhotoUrl = null;
@@ -160,13 +164,16 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
 
   Future<void> _saveRound() async {
     if (_selectedPlayers.isEmpty) {
-      SnackbarHelper.showError(context, 'Select at least 1 player');
+      SnackbarHelper.showError(
+        context,
+        AppStrings.selectAtLeastOnePlayerError,
+      );
       return;
     }
-    
-    // If we are finishing or it's an already finished round, we need a winner
-    if ((widget.isFinishing || !widget.round.isActive) && _selectedWinnerUid == null) {
-      SnackbarHelper.showError(context, 'Please select a winner');
+
+    if ((widget.isFinishing || !widget.round.isActive) &&
+        _selectedWinnerUid == null) {
+      SnackbarHelper.showError(context, AppStrings.selectWinnerError);
       return;
     }
 
@@ -175,12 +182,11 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
     try {
       final groupProvider = Provider.of<GroupProvider>(context, listen: false);
       final groupId = groupProvider.activeGroup!.id;
-      
+
       String? finalWinnerPhotoUrl = _existingWinnerPhotoUrl;
       String? finalBoardPhotoUrl = _existingBoardPhotoUrl;
       String? finalPartyPhotoUrl = _existingPartyPhotoUrl;
 
-      // Upload new photos if they exist
       if (_winnerPhotoBytes != null) {
         finalWinnerPhotoUrl = await _storageService.uploadRoundPhotoBytes(
           bytes: _winnerPhotoBytes!,
@@ -212,11 +218,16 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
         );
       }
 
+      if (_selectedPlayers.length > AppConstants.maxStandardPlayers &&
+          !_selectedExpansions.contains(kFiveSixPlayerExtension)) {
+        _selectedExpansions.add(kFiveSixPlayerExtension);
+      }
+
       final updatedRound = RoundModel(
         id: widget.round.id,
         players: _selectedPlayers,
         winnerUid: _selectedWinnerUid,
-        isActive: widget.isFinishing ? false : widget.round.isActive, // If finishing, make false. Otherwise keep status.
+        isActive: widget.isFinishing ? false : widget.round.isActive,
         expansions: _selectedExpansions,
         notes: _notesController.text.trim(),
         winnerPhotoUrl: finalWinnerPhotoUrl,
@@ -224,314 +235,295 @@ class _RoundEditorScreenState extends State<RoundEditorScreen> {
         partyPhotoUrl: finalPartyPhotoUrl,
       );
 
-      bool success = await groupProvider.updateRound(widget.sessionId, updatedRound);
-      
+      bool success = await groupProvider.updateRound(
+        widget.sessionId,
+        updatedRound,
+      );
+
       if (success && mounted) {
         Navigator.pop(context);
-        SnackbarHelper.showSuccess(context, widget.isFinishing ? 'Kolo bolo úspešne ukončené!' : 'Kolo bolo upravené!');
-      } else {
-        if (mounted) SnackbarHelper.showError(context, 'Chyba pri ukladaní kola.');
+        SnackbarHelper.showSuccess(
+          context,
+          widget.isFinishing
+              ? AppStrings.roundFinishedSuccess
+              : AppStrings.roundUpdatedSuccess,
+        );
+      } else if (mounted) {
+        SnackbarHelper.showError(context, AppStrings.saveRoundFailedError);
       }
     } catch (e) {
-      if (mounted) SnackbarHelper.showError(context, 'Chyba pri ukladaní/nahrávaní: $e');
+      if (mounted) {
+        SnackbarHelper.showError(context, AppStrings.saveUploadError(e));
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  void _viewFullPhoto(Uint8List? bytes, String? url) {
-    if (bytes == null && url == null) return;
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(16),
-        child: Stack(
-          alignment: Alignment.topRight,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: InteractiveViewer(
-                child: bytes != null 
-                    ? Image.memory(bytes, fit: BoxFit.contain)
-                    : Image.network(
-                        url!, 
-                        fit: BoxFit.contain,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            width: double.infinity,
-                            height: 300,
-                            color: Colors.black54,
-                            child: const Center(child: CircularProgressIndicator(color: Colors.white)),
-                          );
-                        },
-                      ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: CircleAvatar(
-                backgroundColor: Colors.black54,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white),
-                  onPressed: () => Navigator.pop(ctx),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPhotoPicker(String label, String type, Uint8List? bytes, String? existingUrl, IconData icon) {
-    bool hasImage = bytes != null || existingUrl != null;
-    
-    return GestureDetector(
-      onTap: () {
-        if (hasImage) {
-          _viewFullPhoto(bytes, existingUrl);
-        } else {
-          _pickImage(type);
-        }
-      },
-      child: Container(
-        width: double.infinity,
-        height: 130,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade300),
-          image: hasImage
-              ? DecorationImage(
-                  image: bytes != null ? MemoryImage(bytes) as ImageProvider : NetworkImage(existingUrl!),
-                  fit: BoxFit.cover,
-                )
-              : null,
-        ),
-        child: !hasImage 
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, size: 32, color: Colors.grey.shade500),
-                  const SizedBox(height: 8),
-                  Text(label, style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.bold)),
-                  Text('Tap to add photo', style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
-                ],
-              )
-            : Align(
-                alignment: Alignment.topRight,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: Colors.black54,
-                        radius: 16,
-                        child: IconButton(
-                          icon: const Icon(Icons.fullscreen, size: 16, color: Colors.white),
-                          padding: EdgeInsets.zero,
-                          tooltip: 'Zobraziť celú fotku',
-                          onPressed: () => _viewFullPhoto(bytes, existingUrl),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      CircleAvatar(
-                        backgroundColor: Colors.black54,
-                        radius: 16,
-                        child: IconButton(
-                          icon: const Icon(Icons.edit, size: 16, color: Colors.white),
-                          padding: EdgeInsets.zero,
-                          tooltip: 'Zmeniť fotku',
-                          onPressed: () => _pickImage(type),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      CircleAvatar(
-                        backgroundColor: Colors.black54,
-                        radius: 16,
-                        child: IconButton(
-                          icon: const Icon(Icons.close, size: 16, color: Colors.white),
-                          padding: EdgeInsets.zero,
-                          tooltip: 'Odstrániť',
-                          onPressed: () {
-                            if (bytes != null) _setImage(type, null);
-                            if (existingUrl != null) _removeExistingImage(type);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isFinishing ? 'Ukončiť kolo' : 'Upraviť kolo'),
+        title: Text(
+          widget.isFinishing
+              ? AppStrings.finishRoundTitle
+              : AppStrings.editRoundTitle,
+        ),
       ),
-      body: _isLoading 
-        ? const Center(child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Ukladám...'),
-            ],
-          ))
-        : SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (!widget.isFinishing) ...[
-                  const Text('Hráči', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade300),
+      body: _isLoading
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text(AppStrings.saving),
+                ],
+              ),
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (!widget.isFinishing) ...[
+                    const Text(
+                      AppStrings.playersLabel,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    child: Column(
-                      children: widget.members.map((player) {
-                        bool isSelected = _selectedPlayers.contains(player.uid);
-                        return CheckboxListTile(
-                          title: Text(player.name),
-                          value: isSelected,
-                          dense: true,
-                          activeColor: Theme.of(context).colorScheme.primary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          onChanged: (val) {
-                            setState(() {
-                              if (val == true) {
-                                _selectedPlayers.add(player.uid);
-                              } else {
-                                _selectedPlayers.remove(player.uid);
-                                if (_selectedWinnerUid == player.uid) _selectedWinnerUid = null;
-                              }
-
-                              // Auto-select or unselect 5-6 player extension
-                              if (_selectedPlayers.length > 4) {
-                                if (!_selectedExpansions.contains('Doplnok pre 5 – 6 hráčov')) {
-                                  _selectedExpansions.add('Doplnok pre 5 – 6 hráčov');
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.cardSurface,
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.cardBorderRadius,
+                        ),
+                        border: Border.all(color: AppColors.cardBorder),
+                      ),
+                      child: Column(
+                        children: widget.members.map((player) {
+                          bool isSelected =
+                              _selectedPlayers.contains(player.uid);
+                          return CheckboxListTile(
+                            title: Text(player.name),
+                            value: isSelected,
+                            dense: true,
+                            activeColor: Theme.of(context).colorScheme.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppConstants.buttonBorderRadius,
+                              ),
+                            ),
+                            onChanged: (val) {
+                              setState(() {
+                                if (val == true) {
+                                  _selectedPlayers.add(player.uid);
+                                } else {
+                                  _selectedPlayers.remove(player.uid);
+                                  if (_selectedWinnerUid == player.uid) {
+                                    _selectedWinnerUid = null;
+                                  }
                                 }
-                              } else {
-                                _selectedExpansions.remove('Doplnok pre 5 – 6 hráčov');
-                              }
-                            });
-                          },
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
 
-                // Winner Selector (Shown if finishing or if it's already finished)
-                if (widget.isFinishing || !widget.round.isActive) ...[
-                  const Text('Výber víťaza', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade300),
+                                if (_selectedPlayers.length >
+                                    AppConstants.maxStandardPlayers) {
+                                  if (!_selectedExpansions.contains(
+                                    kFiveSixPlayerExtension,
+                                  )) {
+                                    _selectedExpansions
+                                        .add(kFiveSixPlayerExtension);
+                                  }
+                                } else {
+                                  _selectedExpansions
+                                      .remove(kFiveSixPlayerExtension);
+                                }
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
                     ),
-                    child: Column(
-                      children: widget.members.where((m) => _selectedPlayers.contains(m.uid)).map((member) {
-                        final isSelected = _selectedWinnerUid == member.uid;
-                        return RadioListTile<String>(
-                          title: Text(member.name, style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
-                          value: member.uid,
-                          groupValue: _selectedWinnerUid,
-                          activeColor: Theme.of(context).colorScheme.primary,
-                          onChanged: (val) {
-                            if (val != null) setState(() => _selectedWinnerUid = val);
-                          },
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
+                    const SizedBox(height: 24),
+                  ],
 
-                if (!widget.isFinishing) ...[
-                  const Text('Rozšírenia', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.shade300),
+                  if (widget.isFinishing || !widget.round.isActive) ...[
+                    const Text(
+                      AppStrings.selectWinnerLabel,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    child: Column(
-                      children: expansionsList.map((exp) {
-                        bool isSelected = _selectedExpansions.contains(exp);
-                        return CheckboxListTile(
-                          title: Text(exp),
-                          value: isSelected,
-                          dense: true,
-                          activeColor: Theme.of(context).colorScheme.primary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          onChanged: (val) {
-                            setState(() {
-                              if (val == true) {
-                                _selectedExpansions.add(exp);
-                              } else {
-                                _selectedExpansions.remove(exp);
-                              }
-                            });
-                          },
-                        );
-                      }).toList(),
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.cardSurface,
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.cardBorderRadius,
+                        ),
+                        border: Border.all(color: AppColors.cardBorder),
+                      ),
+                      child: RadioGroup<String>(
+                        groupValue: _selectedWinnerUid,
+                        onChanged: (val) {
+                          if (val != null) {
+                            setState(() => _selectedWinnerUid = val);
+                          }
+                        },
+                        child: Column(
+                          children: widget.members
+                              .where((m) => _selectedPlayers.contains(m.uid))
+                              .map((member) {
+                            final isSelected = _selectedWinnerUid == member.uid;
+                            return RadioListTile<String>(
+                              title: Text(
+                                member.name,
+                                style: TextStyle(
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                ),
+                              ),
+                              value: member.uid,
+                              activeColor: Theme.of(context).colorScheme.primary,
+                            );
+                          }).toList(),
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
+                  ],
 
-                  const Text('Poznámka (voliteľná)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _notesController,
-                    decoration: InputDecoration(
-                      hintText: 'Poznámka ku kolu...',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  if (!widget.isFinishing) ...[
+                    const Text(
+                      AppStrings.expansionsLabel,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    maxLines: 2,
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.cardSurface,
+                        borderRadius: BorderRadius.circular(
+                          AppConstants.cardBorderRadius,
+                        ),
+                        border: Border.all(color: AppColors.cardBorder),
+                      ),
+                      child: Column(
+                        children: expansionsList.map((exp) {
+                          bool isSelected = _selectedExpansions.contains(exp);
+                          return CheckboxListTile(
+                            title: Text(exp),
+                            value: isSelected,
+                            dense: true,
+                            activeColor: Theme.of(context).colorScheme.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppConstants.buttonBorderRadius,
+                              ),
+                            ),
+                            onChanged: (val) {
+                              setState(() {
+                                if (val == true) {
+                                  _selectedExpansions.add(exp);
+                                } else {
+                                  _selectedExpansions.remove(exp);
+                                }
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    const Text(
+                      AppStrings.notesOptionalLabel,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _notesController,
+                      decoration: InputDecoration(
+                        hintText: AppStrings.roundNotesHint,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(
+                            AppConstants.buttonBorderRadius,
+                          ),
+                        ),
+                      ),
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+
+                  const Text(
+                    AppStrings.photosOptionalLabel,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 8),
+                  const Text(
+                    AppStrings.photosSubtitle,
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  RoundPhotoPickerCard(
+                    label: AppStrings.winnerPhotoLabel,
+                    bytes: _winnerPhotoBytes,
+                    existingUrl: _existingWinnerPhotoUrl,
+                    icon: Icons.person,
+                    onPick: () => _pickImage('winner'),
+                    onRemove: () => _removeImage('winner'),
+                  ),
+                  const SizedBox(height: 16),
+                  RoundPhotoPickerCard(
+                    label: AppStrings.boardPhotoLabel,
+                    bytes: _boardPhotoBytes,
+                    existingUrl: _existingBoardPhotoUrl,
+                    icon: Icons.grid_on,
+                    onPick: () => _pickImage('board'),
+                    onRemove: () => _removeImage('board'),
+                  ),
+                  const SizedBox(height: 16),
+                  RoundPhotoPickerCard(
+                    label: AppStrings.groupPhotoLabel,
+                    bytes: _partyPhotoBytes,
+                    existingUrl: _existingPartyPhotoUrl,
+                    icon: Icons.groups,
+                    onPick: () => _pickImage('party'),
+                    onRemove: () => _removeImage('party'),
+                  ),
+
+                  const SizedBox(height: 48),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: _saveRound,
+                      child: Text(
+                        widget.isFinishing
+                            ? AppStrings.finishRoundTitle
+                            : AppStrings.saveChangesButton,
+                        style: const TextStyle(fontSize: 18),
+                      ),
+                    ),
+                  ),
                 ],
-                
-                const Text('Fotky (voliteľné)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                Text('Pridaj spomienky a fotky z tohto kola!', style: TextStyle(color: Colors.grey.shade600, fontSize: 14)),
-                const SizedBox(height: 16),
-                
-                _buildPhotoPicker('Fotka víťaza', 'winner', _winnerPhotoBytes, _existingWinnerPhotoUrl, Icons.person),
-                const SizedBox(height: 16),
-                _buildPhotoPicker('Fotka hracej plochy', 'board', _boardPhotoBytes, _existingBoardPhotoUrl, Icons.grid_on),
-                const SizedBox(height: 16),
-                _buildPhotoPicker('Spoločná fotka', 'party', _partyPhotoBytes, _existingPartyPhotoUrl, Icons.groups),
-                
-                const SizedBox(height: 48),
-                
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _saveRound,
-                    child: Text(widget.isFinishing ? 'Ukončiť kolo' : 'Uložiť zmeny', style: const TextStyle(fontSize: 18)),
-                  ),
-                )
-              ],
+              ),
             ),
-          ),
     );
   }
 }

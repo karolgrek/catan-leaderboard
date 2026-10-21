@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../constants/app_strings.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
-  
+
   User? _user;
   UserModel? _userModel;
   bool _isLoading = true;
@@ -35,10 +36,10 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> signIn(String email, String password) async {
     _isLoading = true;
     notifyListeners();
-    
-    User? result = await _authService.signInWithEmailAndPassword(email, password);
-    
-    // isLoading is handled by the userStream listener, but we can set it here if auth failed
+
+    User? result =
+        await _authService.signInWithEmailAndPassword(email, password);
+
     if (result == null) {
       _isLoading = false;
       notifyListeners();
@@ -49,14 +50,36 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> register(String email, String password, String name) async {
     _isLoading = true;
     notifyListeners();
-    
-    User? result = await _authService.registerWithEmailAndPassword(email, password, name);
-    
+
+    User? result = await _authService.registerWithEmailAndPassword(
+      email,
+      password,
+      name,
+    );
+
     if (result == null) {
       _isLoading = false;
       notifyListeners();
     }
     return result != null;
+  }
+
+  Future<String?> sendPasswordResetEmail(String email) async {
+    try {
+      await _authService.sendPasswordResetEmail(email);
+      return null;
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        return AppStrings.userNotFoundError;
+      } else if (e.code == 'invalid-email') {
+        return AppStrings.invalidEmailError;
+      } else if (e.code == 'too-many-requests') {
+        return AppStrings.tooManyRequestsError;
+      }
+      return e.message ?? AppStrings.resetPasswordGenericError;
+    } catch (e) {
+      return AppStrings.resetPasswordGenericError;
+    }
   }
 
   Future<void> signOut() async {

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../constants/app_colors.dart';
+import '../../constants/app_constants.dart';
+import '../../constants/app_strings.dart';
 import '../../models/session_model.dart';
 import '../../providers/group_provider.dart';
 import '../../utils/date_formatters.dart';
@@ -24,7 +27,9 @@ class _SessionEditorScreenState extends State<SessionEditorScreen> {
     super.initState();
     _selectedDate = widget.session?.date ?? DateTime.now();
     _notesController = TextEditingController(text: widget.session?.notes ?? '');
-    _selectedPlayers = widget.session != null ? List<String>.from(widget.session!.selectedPlayers) : [];
+    _selectedPlayers = widget.session != null
+        ? List<String>.from(widget.session!.selectedPlayers)
+        : [];
   }
 
   @override
@@ -37,8 +42,8 @@ class _SessionEditorScreenState extends State<SessionEditorScreen> {
     DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2101),
+      firstDate: DateTime(AppConstants.minPickerYear),
+      lastDate: DateTime(AppConstants.maxPickerYear),
     );
     if (picked != null) {
       setState(() {
@@ -49,13 +54,16 @@ class _SessionEditorScreenState extends State<SessionEditorScreen> {
 
   void _saveSession() async {
     if (_selectedPlayers.isEmpty) {
-      SnackbarHelper.showError(context, 'Please select at least one player.');
+      SnackbarHelper.showError(
+        context,
+        AppStrings.selectAtLeastOnePlayerError,
+      );
       return;
     }
 
     final groupProvider = Provider.of<GroupProvider>(context, listen: false);
     bool success;
-    
+
     if (widget.session != null) {
       success = await groupProvider.updateSession(
         widget.session!.id,
@@ -74,7 +82,7 @@ class _SessionEditorScreenState extends State<SessionEditorScreen> {
     if (success && mounted) {
       Navigator.pop(context);
     } else if (mounted) {
-      SnackbarHelper.showError(context, 'Failed to save session.');
+      SnackbarHelper.showError(context, AppStrings.saveSessionFailedError);
     }
   }
 
@@ -85,12 +93,16 @@ class _SessionEditorScreenState extends State<SessionEditorScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.session != null ? 'Edit Session' : 'New Session'),
+        title: Text(
+          widget.session != null
+              ? AppStrings.editSessionTitle
+              : AppStrings.newSessionTitle,
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
             onPressed: _saveSession,
-          )
+          ),
         ],
       ),
       body: Padding(
@@ -98,38 +110,54 @@ class _SessionEditorScreenState extends State<SessionEditorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Date Picker
             Card(
               elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(
+                  AppConstants.cardBorderRadius,
+                ),
+                side: const BorderSide(color: AppColors.cardBorder),
               ),
-              color: Colors.white,
+              color: AppColors.cardSurface,
               child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                title: const Text('Session Date', style: TextStyle(fontWeight: FontWeight.bold)),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                title: const Text(
+                  AppStrings.sessionDateLabel,
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 subtitle: Text(DateFormatter.toReadableDate(_selectedDate)),
                 trailing: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(Icons.calendar_today, color: Theme.of(context).colorScheme.primary),
+                  child: Icon(
+                    Icons.calendar_today,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ),
                 onTap: _pickDate,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(
+                    AppConstants.cardBorderRadius,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 24),
-            // Notes Field
             TextField(
               controller: _notesController,
-              decoration: InputDecoration(
-                labelText: 'Notes (Optional)',
+              decoration: const InputDecoration(
+                labelText: AppStrings.notesOptionalLabel,
                 alignLabelWithHint: true,
-                prefixIcon: const Padding(
+                prefixIcon: Padding(
                   padding: EdgeInsets.only(bottom: 48.0),
                   child: Icon(Icons.edit_note),
                 ),
@@ -137,27 +165,48 @@ class _SessionEditorScreenState extends State<SessionEditorScreen> {
               maxLines: 3,
             ),
             const SizedBox(height: 32),
-            // Player Selection
-            const Text('Select Players', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text(
+              AppStrings.selectPlayersTitle,
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 16),
             Expanded(
               child: members.isEmpty
-                  ? Center(child: Text('No players in this group.', style: TextStyle(color: Colors.grey.shade500)))
+                  ? const Center(
+                      child: Text(
+                        AppStrings.noPlayersInGroup,
+                        style: TextStyle(color: AppColors.textSecondary),
+                      ),
+                    )
                   : ListView.builder(
                       itemCount: members.length,
                       itemBuilder: (context, index) {
                         final member = members[index];
-                        final isSelected = _selectedPlayers.contains(member.uid);
+                        final isSelected =
+                            _selectedPlayers.contains(member.uid);
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 8.0),
                           child: CheckboxListTile(
-                            title: Text(member.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                            title: Text(
+                              member.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                             value: isSelected,
                             activeColor: Theme.of(context).colorScheme.primary,
-                            tileColor: isSelected ? Theme.of(context).colorScheme.primary.withOpacity(0.05) : Colors.white,
+                            tileColor: isSelected
+                                ? AppColors.chitBackground
+                                : AppColors.cardSurface,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              side: BorderSide(color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(
+                                AppConstants.buttonBorderRadius,
+                              ),
+                              side: BorderSide(
+                                color: isSelected
+                                    ? Theme.of(context).colorScheme.primary
+                                    : AppColors.cardBorder,
+                              ),
                             ),
                             onChanged: (bool? value) {
                               setState(() {

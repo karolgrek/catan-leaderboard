@@ -1,34 +1,46 @@
 import 'package:flutter/material.dart';
 
+import '../../constants/app_constants.dart';
+import '../../constants/app_strings.dart';
 import '../../models/session_model.dart';
 import '../../providers/group_provider.dart';
 import '../../utils/snackbar_helper.dart';
 
-void showStartRoundDialog(BuildContext context, GroupProvider provider, String sessionId, List<dynamic> sessionMembers) {
+void showStartRoundDialog(
+  BuildContext context,
+  GroupProvider provider,
+  String sessionId,
+  List<dynamic> sessionMembers,
+) {
   List<String> selectedForRound = [];
   List<String> selectedExpansions = [];
   final expansions = kCatanExpansions;
   final TextEditingController notesController = TextEditingController();
-  
+
   showDialog(
     context: context,
     builder: (context) {
       return StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             title: const Row(
               children: [
                 Icon(Icons.play_circle_fill, color: Colors.deepOrange),
                 SizedBox(width: 8),
-                Text('Nové kolo'),
+                Text(AppStrings.newRoundDialogTitle),
               ],
             ),
             content: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Hráči', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const Text(
+                    AppStrings.playersLabel,
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                   const SizedBox(height: 8),
                   ...sessionMembers.map((player) {
                     bool isSelected = selectedForRound.contains(player.uid);
@@ -37,7 +49,9 @@ void showStartRoundDialog(BuildContext context, GroupProvider provider, String s
                       value: isSelected,
                       dense: true,
                       activeColor: Theme.of(context).colorScheme.primary,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       onChanged: (val) {
                         setState(() {
                           if (val == true) {
@@ -46,23 +60,28 @@ void showStartRoundDialog(BuildContext context, GroupProvider provider, String s
                             selectedForRound.remove(player.uid);
                           }
 
-                          // Auto-select or unselect 5-6 player extension
-                          if (selectedForRound.length > 4) {
-                            if (!selectedExpansions.contains('Doplnok pre 5 – 6 hráčov')) {
-                              selectedExpansions.add('Doplnok pre 5 – 6 hráčov');
+                          if (selectedForRound.length >
+                              AppConstants.maxStandardPlayers) {
+                            if (!selectedExpansions.contains(
+                              kFiveSixPlayerExtension,
+                            )) {
+                              selectedExpansions.add(kFiveSixPlayerExtension);
                             }
                           } else {
-                            selectedExpansions.remove('Doplnok pre 5 – 6 hráčov');
+                            selectedExpansions.remove(kFiveSixPlayerExtension);
                           }
                         });
                       },
                     );
-                  }).toList(),
+                  }),
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 8.0),
                     child: Divider(),
                   ),
-                  const Text('Rozšírenia', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const Text(
+                    AppStrings.expansionsLabel,
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                   const SizedBox(height: 8),
                   ...expansions.map((exp) {
                     bool isSelected = selectedExpansions.contains(exp);
@@ -71,7 +90,9 @@ void showStartRoundDialog(BuildContext context, GroupProvider provider, String s
                       value: isSelected,
                       dense: true,
                       activeColor: Theme.of(context).colorScheme.primary,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       onChanged: (val) {
                         setState(() {
                           if (val == true) {
@@ -82,17 +103,20 @@ void showStartRoundDialog(BuildContext context, GroupProvider provider, String s
                         });
                       },
                     );
-                  }).toList(),
+                  }),
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 8.0),
                     child: Divider(),
                   ),
-                  const Text('Poznámka (voliteľná)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const Text(
+                    AppStrings.notesOptionalLabel,
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: notesController,
                     decoration: const InputDecoration(
-                      hintText: 'Poznámka ku kolu...',
+                      hintText: AppStrings.roundNotesHint,
                       border: OutlineInputBorder(),
                     ),
                     maxLines: 2,
@@ -101,18 +125,34 @@ void showStartRoundDialog(BuildContext context, GroupProvider provider, String s
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Zrušiť')),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(AppStrings.cancel),
+              ),
               ElevatedButton(
                 onPressed: () async {
                   if (selectedForRound.isEmpty) {
-                    SnackbarHelper.showError(context, 'Vyber aspoň 1 hráča');
+                    SnackbarHelper.showError(
+                      context,
+                      AppStrings.selectAtLeastOnePlayerError,
+                    );
                     return;
                   }
+                  if (selectedForRound.length >
+                          AppConstants.maxStandardPlayers &&
+                      !selectedExpansions.contains(kFiveSixPlayerExtension)) {
+                    selectedExpansions.add(kFiveSixPlayerExtension);
+                  }
                   Navigator.pop(context);
-                  await provider.addRound(sessionId, selectedForRound, selectedExpansions, notesController.text.trim());
+                  await provider.addRound(
+                    sessionId,
+                    selectedForRound,
+                    selectedExpansions,
+                    notesController.text.trim(),
+                  );
                 },
-                child: const Text('Začať kolo'),
-              )
+                child: const Text(AppStrings.startRoundButton),
+              ),
             ],
           );
         },
@@ -120,5 +160,3 @@ void showStartRoundDialog(BuildContext context, GroupProvider provider, String s
     },
   );
 }
-
-

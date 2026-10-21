@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../constants/app_colors.dart';
+import '../../constants/app_constants.dart';
+import '../../constants/app_strings.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/group_provider.dart';
 import '../dialogs/group_dialogs.dart';
+import '../dialogs/notifications_dialog.dart';
 
 class GroupSelectionScreen extends StatelessWidget {
   const GroupSelectionScreen({super.key});
@@ -13,58 +17,77 @@ class GroupSelectionScreen extends StatelessWidget {
     final groupProvider = Provider.of<GroupProvider>(context);
 
     if (authProvider.user == null) {
-      return const Scaffold(body: Center(child: Text('Not authenticated.')));
+      return const Scaffold(
+        body: Center(child: Text(AppStrings.notAuthenticated)),
+      );
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Catan Leaderboard'),
+        title: const Text(AppStrings.appTitle),
         actions: [
+          const NotificationBellButton(),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
               authProvider.signOut();
             },
-          )
+          ),
         ],
       ),
       body: Column(
         children: [
-          // Beautiful Header
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
+            padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.primary,
               borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(32),
-                bottomRight: Radius.circular(32),
+                bottomLeft: Radius.circular(AppConstants.drawerTopRadius),
+                bottomRight: Radius.circular(AppConstants.drawerTopRadius),
+              ),
+              border: const Border(
+                bottom: BorderSide(color: AppColors.appBarTrim, width: 3),
               ),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
               ],
             ),
             child: Column(
               children: [
-                const Icon(Icons.hexagon, size: 80, color: Colors.white),
-                const SizedBox(height: 16),
+                const Icon(
+                  Icons.hexagon,
+                  size: 72,
+                  color: AppColors.chitBackground,
+                ),
+                const SizedBox(height: 12),
                 const Text(
-                  'Catan Leaderboard',
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+                  AppStrings.appTitle,
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
-                  'Select a group to view rankings',
-                  style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 16),
+                  AppStrings.selectGroupSubtitle,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    fontSize: 16,
+                  ),
                 ),
               ],
             ),
           ),
-          
+
           const SizedBox(height: 24),
-          
-          // List of existing groups
+
           Expanded(
             child: StreamBuilder(
               stream: groupProvider.getUserGroups(authProvider.user!.uid),
@@ -72,9 +95,11 @@ class GroupSelectionScreen extends StatelessWidget {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                
+
                 if (snapshot.hasError) {
-                  return const Center(child: Text('Error loading groups.'));
+                  return const Center(
+                    child: Text(AppStrings.errorLoadingGroups),
+                  );
                 }
 
                 final List<dynamic> groups = snapshot.data ?? [];
@@ -84,12 +109,19 @@ class GroupSelectionScreen extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.group_off_outlined, size: 64, color: Colors.grey.shade400),
+                        Icon(
+                          Icons.group_off_outlined,
+                          size: 64,
+                          color: Colors.grey.shade500,
+                        ),
                         const SizedBox(height: 16),
-                        Text(
-                          'You are not in any groups yet.\nCreate or Join one below!',
+                        const Text(
+                          AppStrings.noGroupsMessage,
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 16,
+                          ),
                         ),
                       ],
                     ),
@@ -105,7 +137,9 @@ class GroupSelectionScreen extends StatelessWidget {
                       padding: const EdgeInsets.only(bottom: 12),
                       child: Card(
                         child: InkWell(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(
+                            AppConstants.cardBorderRadius,
+                          ),
                           onTap: () async {
                             await groupProvider.setActiveGroup(group);
                           },
@@ -113,25 +147,53 @@ class GroupSelectionScreen extends StatelessWidget {
                             padding: const EdgeInsets.all(20),
                             child: Row(
                               children: [
-                                CircleAvatar(
-                                  backgroundColor: Theme.of(context).colorScheme.secondary.withOpacity(0.2),
-                                  child: Icon(Icons.people, color: Theme.of(context).colorScheme.secondary),
+                                Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.chitBackground,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: AppColors.primaryBrick,
+                                      width: 1.8,
+                                    ),
+                                  ),
+                                  child: const Icon(
+                                    Icons.people,
+                                    color: AppColors.primaryBrick,
+                                  ),
                                 ),
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         group.name,
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                          color: AppColors.textPrimary,
+                                        ),
                                       ),
                                       const SizedBox(height: 4),
-                                      Text('${group.members.length} members', style: TextStyle(color: Colors.grey.shade600)),
+                                      Text(
+                                        AppStrings.membersCount(
+                                          group.members.length,
+                                        ),
+                                        style: const TextStyle(
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
-                                Icon(Icons.arrow_forward_ios, color: Colors.grey.shade400, size: 16),
+                                const Icon(
+                                  Icons.arrow_forward_ios,
+                                  color: AppColors.textSecondary,
+                                  size: 16,
+                                ),
                               ],
                             ),
                           ),
@@ -143,37 +205,44 @@ class GroupSelectionScreen extends StatelessWidget {
               },
             ),
           ),
-          
-          // Bottom Buttons
+
           Container(
             padding: const EdgeInsets.all(24.0),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: const BorderRadius.only(topLeft: Radius.circular(32), topRight: Radius.circular(32)),
+              color: AppColors.drawerSurface.withValues(alpha: 0.94),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(AppConstants.drawerTopRadius),
+                topRight: Radius.circular(AppConstants.drawerTopRadius),
+              ),
+              border: const Border(
+                top: BorderSide(color: AppColors.drawerBorder, width: 1.5),
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, -5),
-                )
-              ]
+                ),
+              ],
             ),
             child: SafeArea(
               child: Row(
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () => showJoinModal(context, groupProvider, authProvider),
+                      onPressed: () =>
+                          showJoinModal(context, groupProvider, authProvider),
                       icon: const Icon(Icons.group_add),
-                      label: const Text('Join'),
+                      label: const Text(AppStrings.joinButton),
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () => showCreateModal(context, groupProvider, authProvider),
+                      onPressed: () =>
+                          showCreateModal(context, groupProvider, authProvider),
                       icon: const Icon(Icons.add_circle),
-                      label: const Text('Create'),
+                      label: const Text(AppStrings.createButton),
                     ),
                   ),
                 ],

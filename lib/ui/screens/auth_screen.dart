@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../constants/app_colors.dart';
+import '../../constants/app_strings.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/snackbar_helper.dart';
 
@@ -14,14 +16,82 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _isLogin = true;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _nameController = TextEditingController(); // Only for registration
+  final _nameController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  void _showForgotPasswordDialog() {
+    final resetEmailController =
+        TextEditingController(text: _emailController.text.trim());
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text(AppStrings.forgotPasswordTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              AppStrings.forgotPasswordDescription,
+              style: TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: resetEmailController,
+              decoration: const InputDecoration(
+                labelText: AppStrings.emailLabel,
+                prefixIcon: Icon(Icons.email),
+              ),
+              keyboardType: TextInputType.emailAddress,
+              autofocus: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text(AppStrings.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final email = resetEmailController.text.trim();
+              if (email.isEmpty) {
+                SnackbarHelper.showError(ctx, AppStrings.emptyEmailError);
+                return;
+              }
+              Navigator.pop(ctx);
+              final authProvider =
+                  Provider.of<AuthProvider>(context, listen: false);
+              final error = await authProvider.sendPasswordResetEmail(email);
+              if (!mounted) return;
+              if (error == null) {
+                SnackbarHelper.showSuccess(
+                  context,
+                  AppStrings.resetEmailSentSuccess,
+                );
+              } else {
+                SnackbarHelper.showError(context, error);
+              }
+            },
+            child: const Text(AppStrings.sendResetLinkButton),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _submit() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    
+
     String email = _emailController.text.trim();
     String password = _passwordController.text.trim();
-    
+
     if (email.isEmpty || password.isEmpty) return;
 
     bool success = false;
@@ -34,7 +104,7 @@ class _AuthScreenState extends State<AuthScreen> {
     }
 
     if (!success && mounted) {
-      SnackbarHelper.showError(context, 'Authentication failed. Please check your credentials.');
+      SnackbarHelper.showError(context, AppStrings.authFailedError);
     }
   }
 
@@ -43,19 +113,26 @@ class _AuthScreenState extends State<AuthScreen> {
     final isLoading = Provider.of<AuthProvider>(context).isLoading;
 
     return Scaffold(
-      appBar: AppBar(title: Text(_isLogin ? 'Login' : 'Register')),
+      appBar: AppBar(
+        title: Text(
+          _isLogin ? AppStrings.loginTitle : AppStrings.registerTitle,
+        ),
+      ),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(32.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Hero Icon
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  color: AppColors.chitBackground,
                   shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.primaryBrick,
+                    width: 2.5,
+                  ),
                 ),
                 child: Icon(
                   Icons.hexagon_outlined,
@@ -65,47 +142,86 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
               const SizedBox(height: 24),
               Text(
-                'Catan Leaderboard',
+                AppStrings.appTitle,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
-                'Track your settlements & victory points',
+                AppStrings.appTagline,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey.shade600,
-                ),
+                      color: AppColors.textSecondary,
+                    ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 48),
               if (!_isLogin)
                 TextField(
                   controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Name', prefixIcon: Icon(Icons.person)),
+                  decoration: const InputDecoration(
+                    labelText: AppStrings.nameLabel,
+                    prefixIcon: Icon(Icons.person),
+                  ),
                 ),
               if (!_isLogin) const SizedBox(height: 16),
               TextField(
                 controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.email)),
+                decoration: const InputDecoration(
+                  labelText: AppStrings.emailLabel,
+                  prefixIcon: Icon(Icons.email),
+                ),
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: _passwordController,
-                decoration: const InputDecoration(labelText: 'Password', prefixIcon: Icon(Icons.lock)),
+                decoration: const InputDecoration(
+                  labelText: AppStrings.passwordLabel,
+                  prefixIcon: Icon(Icons.lock),
+                ),
                 obscureText: true,
               ),
-              const SizedBox(height: 32),
+              if (_isLogin)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: _showForgotPasswordDialog,
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 8,
+                      ),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: const Text(
+                      AppStrings.forgotPasswordButton,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+              SizedBox(height: _isLogin ? 20 : 32),
               SizedBox(
                 width: double.infinity,
                 child: isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : ElevatedButton(
                         onPressed: _submit,
-                        child: Text(_isLogin ? 'Login' : 'Register', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          _isLogin
+                              ? AppStrings.loginTitle
+                              : AppStrings.registerTitle,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
               ),
               const SizedBox(height: 16),
@@ -116,7 +232,9 @@ class _AuthScreenState extends State<AuthScreen> {
                   });
                 },
                 child: Text(
-                  _isLogin ? 'Create an account' : 'I already have an account',
+                  _isLogin
+                      ? AppStrings.createAccountToggle
+                      : AppStrings.alreadyHaveAccountToggle,
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ),
