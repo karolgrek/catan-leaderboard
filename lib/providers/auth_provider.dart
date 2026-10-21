@@ -38,7 +38,6 @@ class AuthProvider extends ChangeNotifier {
     
     User? result = await _authService.signInWithEmailAndPassword(email, password);
     
-    // isLoading is handled by the userStream listener, but we can set it here if auth failed
     if (result == null) {
       _isLoading = false;
       notifyListeners();
@@ -57,6 +56,24 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
     }
     return result != null;
+  }
+
+  Future<String?> sendPasswordResetEmail(String email) async {
+    try {
+      await _authService.sendPasswordResetEmail(email);
+      return null;
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        return 'No user found with this email address.';
+      } else if (e.code == 'invalid-email') {
+        return 'Invalid email address format.';
+      } else if (e.code == 'too-many-requests') {
+        return 'Too many requests. Please try again later.';
+      }
+      return e.message ?? 'Failed to send password reset email.';
+    } catch (e) {
+      return 'Failed to send password reset email.';
+    }
   }
 
   Future<void> signOut() async {
