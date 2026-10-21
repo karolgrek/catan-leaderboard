@@ -103,14 +103,25 @@ class MyApp extends StatelessWidget {
           if (authProvider.isAuthenticated) {
             return Consumer<GroupProvider>(
               builder: (context, groupProvider, child) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  groupProvider.startListeningToNotifications(
+                    authProvider.user?.uid,
+                  );
+                });
                 if (groupProvider.activeGroup != null) {
-                  return HomeScreen();
+                  return const HomeScreen();
                 }
-                return GroupSelectionScreen();
+                return const GroupSelectionScreen();
               },
             );
           }
-          return AuthScreen();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Provider.of<GroupProvider>(
+              context,
+              listen: false,
+            ).startListeningToNotifications(null);
+          });
+          return const AuthScreen();
         },
       ),
     );

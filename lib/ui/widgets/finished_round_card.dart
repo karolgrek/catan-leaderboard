@@ -37,10 +37,14 @@ class FinishedRoundCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasPhotos = round.winnerPhotoUrl != null || round.boardPhotoUrl != null || round.partyPhotoUrl != null;
+    final hasPhotos = round.winnerPhotoUrl != null ||
+        round.boardPhotoUrl != null ||
+        round.partyPhotoUrl != null;
 
     final playerNames = round.players.map((uid) {
-      final p = members.cast<dynamic>().firstWhere((m) => m.uid == uid, orElse: () => null);
+      final p = members
+          .cast<dynamic>()
+          .firstWhere((m) => m.uid == uid, orElse: () => null);
       return p != null ? p.name : uid;
     }).join(', ');
 
@@ -72,7 +76,10 @@ class FinishedRoundCard extends StatelessWidget {
                 child: Center(
                   child: Text(
                     '#${index + 1}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.amber),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.amber,
+                    ),
                   ),
                 ),
               ),
@@ -82,22 +89,40 @@ class FinishedRoundCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Víťaz: ${winner.name}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      'Winner: ${winner.name}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Hráči: $playerNames',
-                      style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                      'Players: $playerNames',
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontSize: 13,
+                      ),
                     ),
                     Builder(
                       builder: (context) {
-                        final displayExpansions = round.expansions.where((e) => e != 'Základ').toList();
-                        if (displayExpansions.isEmpty) return const SizedBox.shrink();
+                        final displayExpansions = List<String>.from(
+                          round.expansions
+                              .where((e) => e != 'Základ' && e != 'Base Game')
+                              .map(normalizeExpansionName),
+                        );
+                        if (round.players.length > 4 &&
+                            !displayExpansions.contains(
+                              kFiveSixPlayerExtension,
+                            )) {
+                          displayExpansions.insert(0, kFiveSixPlayerExtension);
+                        }
+                        if (displayExpansions.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
                         return Padding(
                           padding: const EdgeInsets.only(top: 4.0),
                           child: Text(
-                            'Rozšírenia: ${displayExpansions.join(', ')}',
+                            'Expansions: ${displayExpansions.join(', ')}',
                             style: const TextStyle(
                               fontStyle: FontStyle.italic,
                               fontSize: 12,
@@ -111,7 +136,7 @@ class FinishedRoundCard extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.only(top: 4.0),
                         child: Text(
-                          'Poznámka: ${round.notes}',
+                          'Notes: ${round.notes}',
                           style: const TextStyle(
                             fontStyle: FontStyle.italic,
                             fontSize: 13,
@@ -127,11 +152,26 @@ class FinishedRoundCard extends StatelessWidget {
                           runSpacing: 8,
                           children: [
                             if (round.winnerPhotoUrl != null)
-                              _buildThumbnail(context, round.winnerPhotoUrl!, 'Víťaz', Icons.person),
+                              _buildThumbnail(
+                                context,
+                                round.winnerPhotoUrl!,
+                                'Winner',
+                                Icons.person,
+                              ),
                             if (round.boardPhotoUrl != null)
-                              _buildThumbnail(context, round.boardPhotoUrl!, 'Plocha', Icons.grid_on),
+                              _buildThumbnail(
+                                context,
+                                round.boardPhotoUrl!,
+                                'Board',
+                                Icons.grid_on,
+                              ),
                             if (round.partyPhotoUrl != null)
-                              _buildThumbnail(context, round.partyPhotoUrl!, 'Párty', Icons.groups),
+                              _buildThumbnail(
+                                context,
+                                round.partyPhotoUrl!,
+                                'Party',
+                                Icons.groups,
+                              ),
                           ],
                         ),
                       ),
@@ -154,7 +194,12 @@ class FinishedRoundCard extends StatelessWidget {
     );
   }
 
-  Widget _buildThumbnail(BuildContext context, String url, String label, IconData icon) {
+  Widget _buildThumbnail(
+    BuildContext context,
+    String url,
+    String label,
+    IconData icon,
+  ) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () {
@@ -178,14 +223,23 @@ class FinishedRoundCard extends StatelessWidget {
                           width: double.infinity,
                           height: 300,
                           color: Colors.black54,
-                          child: const Center(child: CircularProgressIndicator(color: Colors.white)),
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          ),
                         );
                       },
                       errorBuilder: (context, error, stackTrace) => Container(
                         width: double.infinity,
                         height: 200,
                         color: Colors.grey.shade900,
-                        child: const Center(child: Text('Failed to load image', style: TextStyle(color: Colors.white))),
+                        child: const Center(
+                          child: Text(
+                            'Failed to load image',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -240,7 +294,8 @@ class FinishedRoundCard extends StatelessWidget {
                   ),
                 );
               },
-              errorBuilder: (context, error, stackTrace) => Icon(icon, size: 24, color: Colors.grey.shade400),
+              errorBuilder: (context, error, stackTrace) =>
+                  Icon(icon, size: 24, color: Colors.grey.shade400),
             ),
             Positioned(
               bottom: 0,

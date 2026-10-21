@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/group_provider.dart';
 import '../../utils/snackbar_helper.dart';
+import '../dialogs/notifications_dialog.dart';
 import '../widgets/leaderboard_section.dart';
 import '../widgets/sessions_section.dart';
 import 'session_editor_screen.dart';
@@ -37,6 +38,7 @@ class HomeScreen extends StatelessWidget {
           },
         ),
         actions: [
+          const NotificationBellButton(),
           IconButton(
             icon: const Icon(Icons.copy),
             tooltip: 'Copy Group ID',

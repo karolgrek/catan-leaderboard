@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/group_provider.dart';
 import '../dialogs/group_dialogs.dart';
+import '../dialogs/notifications_dialog.dart';
 
 class GroupSelectionScreen extends StatelessWidget {
   const GroupSelectionScreen({super.key});
@@ -20,6 +21,7 @@ class GroupSelectionScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Catan Leaderboard'),
         actions: [
+          const NotificationBellButton(),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
